@@ -2,6 +2,11 @@ import puppeteer from 'puppeteer-core';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+type Market = {
+	yenPerDollar: string;
+	bonds10: string;
+};
+
 type Total = {
 	amount: string;
 	diff: string;
@@ -20,6 +25,7 @@ type Possess = {
 };
 
 type Result = {
+	market: Market;
 	total: Total;
 	possessList: Possess[];
 };
@@ -27,6 +33,7 @@ type Result = {
 const LOGIN_URL = 'https://www.rakuten-sec.co.jp/';
 const ALL_ASSET_LIST_URL =
 	'https://member.rakuten-sec.co.jp/app/ass_all_possess_lst.do;';
+const MARKET_URL = 'https://member.rakuten-sec.co.jp/app/market_top.do;';
 
 const INTERVAL = 10;
 
@@ -54,7 +61,11 @@ const sleep = (time: number): Promise<void> =>
 
 	await sleep(INTERVAL);
 
-	const result: Result = { total: { amount: '0', diff: '0' }, possessList: [] };
+	const result: Result = {
+		market: { yenPerDollar: '0', bonds10: '0' },
+		total: { amount: '0', diff: '0' },
+		possessList: [],
+	};
 
 	const r = await page.evaluate((res: Result) => {
 		const totalAmount = document.querySelector(
@@ -112,6 +123,29 @@ const sleep = (time: number): Promise<void> =>
 
 		return res;
 	}, result);
-	console.log(r);
+	if (r) {
+		result.total = r.total;
+		result.possessList = r.possessList;
+	}
+
+	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
+	await sleep(INTERVAL * 2);
+
+	const market: Market = await page.evaluate((resultMarcket: Market) => {
+		resultMarcket.yenPerDollar = (
+			document.querySelector(
+				'td[id="auto_update_market_index_exchange_XXX31_ask"]'
+			) as HTMLTableElement
+		).innerText;
+		resultMarcket.bonds10 = (
+			document.querySelector(
+				'td[id="auto_update_market_index_bond_BD005_annualized_yield"]'
+			) as HTMLTableElement
+		).innerText;
+		return resultMarcket;
+	}, result.market);
+	result.market = market;
+
+	console.log(result);
 	await browser.close();
 })();
