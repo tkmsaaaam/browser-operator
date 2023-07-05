@@ -7,6 +7,11 @@ type Market = {
 	bonds10: string;
 };
 
+type Asset = {
+	total: Total;
+	possessList: Possess[];
+};
+
 type Total = {
 	amount: string;
 	diff: string;
@@ -26,8 +31,7 @@ type Possess = {
 
 type Result = {
 	market: Market;
-	total: Total;
-	possessList: Possess[];
+	asset: Asset;
 };
 
 const LOGIN_URL = 'https://www.rakuten-sec.co.jp/';
@@ -63,19 +67,21 @@ const sleep = (time: number): Promise<void> =>
 
 	const result: Result = {
 		market: { yenPerDollar: '0', bonds10: '0' },
-		total: { amount: '0', diff: '0' },
-		possessList: [],
+		asset: {
+			total: { amount: '0', diff: '0' },
+			possessList: [],
+		},
 	};
 
-	const r = await page.evaluate((res: Result) => {
+	const asset = await page.evaluate((asset: Asset) => {
 		const totalAmount = document.querySelector(
 			'td[class="R1 B3 f105p"] span[class="fb"]'
 		);
 		if (totalAmount)
-			res.total.amount = (totalAmount as HTMLSpanElement).innerText;
+			asset.total.amount = (totalAmount as HTMLSpanElement).innerText;
 		const totalAmountDiff = document.querySelector('span[class="PLY"]');
 		if (totalAmountDiff)
-			res.total.diff = (totalAmountDiff as HTMLSpanElement).innerText;
+			asset.total.diff = (totalAmountDiff as HTMLSpanElement).innerText;
 
 		const tableProcessData = document.getElementById('table_possess_data');
 		if (!tableProcessData) return;
@@ -101,7 +107,7 @@ const sleep = (time: number): Promise<void> =>
 						.innerText.replace('\t', '')
 						.replace('\n', ''),
 				};
-				res.possessList.push(possess);
+				asset.possessList.push(possess);
 			} else {
 				const possess: Possess = {
 					securityType: dataRaw[0].innerText,
@@ -117,15 +123,14 @@ const sleep = (time: number): Promise<void> =>
 						.innerText.replace('\t', '')
 						.replace('\n', ''),
 				};
-				res.possessList.push(possess);
+				asset.possessList.push(possess);
 			}
 		}
 
-		return res;
-	}, result);
-	if (r) {
-		result.total = r.total;
-		result.possessList = r.possessList;
+		return asset;
+	}, result.asset);
+	if (asset) {
+		result.asset = asset;
 	}
 
 	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
@@ -146,6 +151,6 @@ const sleep = (time: number): Promise<void> =>
 	}, result.market);
 	result.market = market;
 
-	console.log(result);
+	console.log('%o', result);
 	await browser.close();
 })();
