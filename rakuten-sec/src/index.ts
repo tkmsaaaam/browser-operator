@@ -73,7 +73,7 @@ const sleep = (time: number): Promise<void> =>
 		},
 	};
 
-	const asset = await page.evaluate((asset: Asset) => {
+	result.asset = await page.evaluate((asset: Asset) => {
 		const totalAmount = document.querySelector(
 			'td[class="R1 B3 f105p"] span[class="fb"]'
 		);
@@ -84,9 +84,9 @@ const sleep = (time: number): Promise<void> =>
 			asset.total.diff = (totalAmountDiff as HTMLSpanElement).innerText;
 
 		const tableProcessData = document.getElementById('table_possess_data');
-		if (!tableProcessData) return;
+		if (!tableProcessData) return asset;
 		const possessList = tableProcessData.getElementsByTagName('tr');
-		if (!possessList) return;
+		if (!possessList) return asset;
 		const possessCount = possessList.length;
 		for (let index = 3; index < possessCount; index++) {
 			const possessRaw = possessList[index];
@@ -129,14 +129,11 @@ const sleep = (time: number): Promise<void> =>
 
 		return asset;
 	}, result.asset);
-	if (asset) {
-		result.asset = asset;
-	}
 
 	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
 	await sleep(INTERVAL * 2);
 
-	const market: Market = await page.evaluate((resultMarcket: Market) => {
+	result.market = await page.evaluate((resultMarcket: Market) => {
 		resultMarcket.yenPerDollar = (
 			document.querySelector(
 				'td[id="auto_update_market_index_exchange_XXX31_ask"]'
@@ -149,7 +146,6 @@ const sleep = (time: number): Promise<void> =>
 		).innerText;
 		return resultMarcket;
 	}, result.market);
-	result.market = market;
 
 	console.log('%o', result);
 	await browser.close();
