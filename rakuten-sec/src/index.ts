@@ -2,9 +2,16 @@ import puppeteer from 'puppeteer-core';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+type Index = {
+	current: string;
+	diffAmount: string;
+	diffPercent: string;
+	dateTime: string;
+};
+
 type Market = {
-	yenPerDollar: string;
-	bonds10: string;
+	yenPerDollar: Index;
+	bonds10: Index;
 };
 
 type Asset = {
@@ -65,15 +72,12 @@ const sleep = (time: number): Promise<void> =>
 
 	await sleep(INTERVAL);
 
-	const result: Result = {
-		market: { yenPerDollar: '0', bonds10: '0' },
-		asset: {
-			total: { amount: '0', diff: '0' },
-			possessList: [],
-		},
+	const initializedAsset: Asset = {
+		total: { amount: '0', diff: '0' },
+		possessList: [],
 	};
 
-	result.asset = await page.evaluate((asset: Asset) => {
+	const asset: Asset = await page.evaluate((asset: Asset) => {
 		const totalAmount = document.querySelector(
 			'td[class="R1 B3 f105p"] span[class="fb"]'
 		);
@@ -89,12 +93,11 @@ const sleep = (time: number): Promise<void> =>
 		if (!possessList) return asset;
 		const possessCount = possessList.length;
 		for (let index = 3; index < possessCount; index++) {
-			const possessRaw = possessList[index];
-			const dataRaw = possessRaw.getElementsByTagName('td');
+			const dataRaw = possessList[index].getElementsByTagName('td');
 			const securityType = dataRaw[0].innerText;
 			if (securityType == '米国株式') {
 				const possess: Possess = {
-					securityType: dataRaw[0].innerText,
+					securityType: securityType,
 					name: dataRaw[1].innerText,
 					accountType: dataRaw[3].innerText,
 					count: dataRaw[4].innerText,
@@ -110,7 +113,7 @@ const sleep = (time: number): Promise<void> =>
 				asset.possessList.push(possess);
 			} else {
 				const possess: Possess = {
-					securityType: dataRaw[0].innerText,
+					securityType: securityType,
 					name: dataRaw[1].innerText,
 					accountType: dataRaw[2].innerText.replace('\n', ''),
 					count: dataRaw[3].innerText,
@@ -128,24 +131,64 @@ const sleep = (time: number): Promise<void> =>
 		}
 
 		return asset;
-	}, result.asset);
+	}, initializedAsset);
 
 	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
 	await sleep(INTERVAL * 2);
 
-	result.market = await page.evaluate((resultMarcket: Market) => {
-		resultMarcket.yenPerDollar = (
+	const initializedIndex: Index = {
+		current: '0',
+		diffAmount: '0',
+		diffPercent: '0',
+		dateTime: '0',
+	};
+
+	const initializedMarket: Market = {
+		yenPerDollar: initializedIndex,
+		bonds10: initializedIndex,
+	};
+
+	const market: Market = await page.evaluate((resultMarcket: Market) => {
+		resultMarcket.yenPerDollar.current = (
 			document.querySelector(
 				'td[id="auto_update_market_index_exchange_XXX31_ask"]'
 			) as HTMLTableElement
 		).innerText;
-		resultMarcket.bonds10 = (
+		resultMarcket.yenPerDollar.diffAmount = (
+			document.querySelector(
+				'td[id="auto_update_market_index_exchange_XXX31_net_change"]'
+			) as HTMLTableElement
+		).innerText;
+		resultMarcket.yenPerDollar.diffPercent = (
+			document.querySelector(
+				'td[id="auto_update_market_index_exchange_XXX31_bid_percent_change"]'
+			) as HTMLTableElement
+		).innerText;
+		resultMarcket.yenPerDollar.dateTime = (
+			document.querySelector(
+				'td[id="auto_update_market_index_exchange_XXX31_now_date"]'
+			) as HTMLTableElement
+		).innerText;
+
+		resultMarcket.bonds10.current = (
 			document.querySelector(
 				'td[id="auto_update_market_index_bond_BD005_annualized_yield"]'
 			) as HTMLTableElement
 		).innerText;
+		resultMarcket.bonds10.diffPercent = (
+			document.querySelector(
+				'td[id="auto_update_market_index_bond_BD005_net_change"]'
+			) as HTMLTableElement
+		).innerText;
+		resultMarcket.bonds10.dateTime = (
+			document.querySelector(
+				'td[id="auto_update_market_index_bond_BD005_now_date"]'
+			) as HTMLTableElement
+		).innerText;
 		return resultMarcket;
-	}, result.market);
+	}, initializedMarket);
+
+	const result: Result = { market: market, asset: asset };
 
 	console.log('%o', result);
 	await browser.close();
