@@ -3,6 +3,7 @@ import open from 'open';
 
 type Event = {
 	category: string;
+	gpName: string;
 	DateTimeStr: string;
 	name: string;
 	commentators: string;
@@ -23,7 +24,6 @@ const sleep = (time: number): Promise<void> =>
 
 (async () => {
 	const targetGpName = process.argv[2];
-	if (!targetGpName) return;
 	const browser = await puppeteer.launch({
 		channel: 'chrome',
 		headless: true,
@@ -32,70 +32,69 @@ const sleep = (time: number): Promise<void> =>
 	await page.goto(DAZN_URL);
 	await sleep(INTERVAL);
 
-	const es: Events = [];
+	const raceEvents = await page.evaluate((gpName: string) => {
+		const events: Events = [];
+		const titles = document.getElementsByTagName('h2');
+		const getTdInnerText = (
+			htmlTableElement: HTMLTableElement,
+			i: number
+		): string => {
+			return htmlTableElement.getElementsByTagName('td')[i].innerText;
+		};
 
-	const raceEvents = await page.evaluate(
-		(events: Events, gpName: string) => {
-			const titles = document.getElementsByTagName('h2');
-			const getTdInnerText = (
-				htmlTableElement: HTMLTableElement,
-				i: number
-			): string => {
-				return htmlTableElement.getElementsByTagName('td')[i].innerText;
+		const pushToEvents = (title: HTMLHeadingElement, gpName: string) => {
+			const makeEvent = (
+				category: string,
+				table: ChildNode | null | undefined,
+				j: number
+			): Event => {
+				const event: Event = {
+					category: category,
+					gpName: gpName,
+					DateTimeStr: getTdInnerText(table as HTMLTableElement, j * 3).replace(
+						'\n',
+						''
+					),
+					name: getTdInnerText(table as HTMLTableElement, j * 3 + 1).replace(
+						'\n',
+						''
+					),
+					commentators: getTdInnerText(
+						table as HTMLTableElement,
+						j * 3 + 2
+					).replace('\n', ','),
+				};
+				return event;
 			};
 
-			for (let index = 0; index < titles.length; index++) {
-				const title = titles[index];
-				if (title.innerText.indexOf(gpName) != -1) {
-					const f1Table = title.nextSibling?.nextSibling;
-					for (let j = 0; j < 5; j++) {
-						const event: Event = {
-							category: 'Formula1',
-							DateTimeStr: getTdInnerText(
-								f1Table as HTMLTableElement,
-								j * 3
-							).replace('\n', ''),
-							name: getTdInnerText(
-								f1Table as HTMLTableElement,
-								j * 3 + 1
-							).replace('\n', ''),
-							commentators: getTdInnerText(
-								f1Table as HTMLTableElement,
-								j * 3 + 2
-							).replace('\n', ','),
-						};
-						events.push(event);
-					}
+			const f1Table = title.nextSibling?.nextSibling;
+			for (let j = 0; j < 5; j++) {
+				const event: Event = makeEvent('Formula1', f1Table, j);
+				events.push(event);
+			}
 
-					const f2Title = f1Table?.nextSibling;
-					if ((f2Title as HTMLHeadElement).innerText.indexOf('F2') != -1) {
-						const f2Table = f2Title?.nextSibling;
-						for (let j = 0; j < 4; j++) {
-							const event: Event = {
-								category: 'Formula2',
-								DateTimeStr: getTdInnerText(
-									f2Table as HTMLTableElement,
-									j * 3
-								).replace('\n', ''),
-								name: getTdInnerText(
-									f2Table as HTMLTableElement,
-									j * 3 + 1
-								).replace('\n', ''),
-								commentators: getTdInnerText(
-									f2Table as HTMLTableElement,
-									j * 3 + 2
-								).replace('\n', ','),
-							};
-							events.push(event);
-						}
-					}
+			const f2Title = f1Table?.nextSibling;
+			if ((f2Title as HTMLHeadElement).innerText.indexOf('F2') != -1) {
+				const f2Table = f2Title?.nextSibling;
+				for (let j = 0; j < 4; j++) {
+					const event: Event = makeEvent('Formula2', f2Table, j);
+					events.push(event);
 				}
 			}
+		};
+
+		if (!gpName) {
+			pushToEvents(titles[1], titles[1].innerText);
 			return events;
-		},
-		es,
-		targetGpName
-	);
+		}
+		for (let index = 0; index < titles.length; index++) {
+			const title = titles[index];
+			if (title.innerText.indexOf(gpName) != -1) {
+				pushToEvents(title, title.innerText);
+			}
+		}
+		return events;
+	}, targetGpName);
 	for (const raceEvent of raceEvents) {
 		const month = raceEvent.DateTimeStr.slice(
 			0,
@@ -108,10 +107,16 @@ const sleep = (time: number): Promise<void> =>
 		const startTime = raceEvent.DateTimeStr.slice(
 			raceEvent.DateTimeStr.indexOf('）') + 1,
 			raceEvent.DateTimeStr.indexOf('）') + 6
-		).replace(':', '');
-		const endTime = String(Number(startTime) + 100);
+		)
+			.replace(':', '')
+			.padStart(4, '0');
+		let diff = 100;
+		if (raceEvent.name.indexOf('決勝') != -1) {
+			diff = 200;
+		}
+		const endTime = String(Number(startTime) + diff).padStart(4, '0');
 
-		const url = `${CALENDAR_BASE_URL}&text=${raceEvent.category}${raceEvent.name}&details=${YEAR}${raceEvent.category}${targetGpName}GP${raceEvent.commentators}&dates=${YEAR}${month}${date}T${startTime}00/${YEAR}${month}${date}T${endTime}00`;
+		const url = `${CALENDAR_BASE_URL}&text=${raceEvent.category}${raceEvent.name}&details=${YEAR}${raceEvent.category}${raceEvent.gpName}${raceEvent.commentators}&dates=${YEAR}${month}${date}T${startTime}00/${YEAR}${month}${date}T${endTime}00`;
 		open(url);
 	}
 	await browser.close();
