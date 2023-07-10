@@ -45,37 +45,31 @@ const sleep = (time: number): Promise<void> =>
 		const pushToEvents = (title: HTMLHeadingElement, gpName: string) => {
 			const makeEvent = (
 				category: string,
-				table: ChildNode | null | undefined,
+				table: HTMLTableElement,
 				j: number
 			): Event => {
 				const event: Event = {
 					category: category,
 					gpName: gpName,
-					DateTimeStr: getTdInnerText(table as HTMLTableElement, j * 3).replace(
-						'\n',
-						''
-					),
-					name: getTdInnerText(table as HTMLTableElement, j * 3 + 1).replace(
-						'\n',
-						''
-					),
-					commentators: getTdInnerText(
-						table as HTMLTableElement,
-						j * 3 + 2
-					).replace('\n', ','),
+					DateTimeStr: getTdInnerText(table, j * 3).replace('\n', ''),
+					name: getTdInnerText(table, j * 3 + 1).replace('\n', ''),
+					commentators: getTdInnerText(table, j * 3 + 2).replace('\n', ','),
 				};
 				return event;
 			};
 
-			const f1Table = title.nextSibling?.nextSibling;
+			const f1Table = title.nextSibling?.nextSibling as HTMLTableElement;
 			for (let j = 0; j < 5; j++) {
 				const event: Event = makeEvent('Formula1', f1Table, j);
 				events.push(event);
 			}
 
-			const f2Title = f1Table?.nextSibling;
-			if ((f2Title as HTMLHeadElement).innerText.indexOf('F2') != -1) {
-				const f2Table = f2Title?.nextSibling;
+			const f2Title = f1Table?.nextSibling as HTMLHeadElement;
+			if (
+				f2Title &&
+				(f2Title as HTMLHeadElement).innerText.indexOf('F2') != -1
+			) {
+				const f2Table = f2Title.nextSibling as HTMLTableElement;
 				for (let j = 0; j < 4; j++) {
 					const event: Event = makeEvent('Formula2', f2Table, j);
 					events.push(event);
