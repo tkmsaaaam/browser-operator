@@ -29,13 +29,11 @@ const clickLatestCsvUrl = async (page: Page): Promise<void> => {
 
 const getCardCount = async (page: Page) => {
 	return await page.evaluate(() => {
-		const i = (
+		return (
 			document.querySelector(
 				'select[id="cardChangeForm:cardtype"]'
 			) as HTMLSelectElement
 		).options.length;
-		console.log(i);
-		return i;
 	});
 };
 
@@ -59,18 +57,12 @@ const getCardCount = async (page: Page) => {
 			await page.goto(TOP_URL);
 			await sleep(INTERVAL);
 			await page.evaluate(index => {
-				const e: HTMLSelectElement | null = document.querySelector(
-					'select[id="cardChangeForm:cardtype"]'
-				);
-				if (e) {
-					e.selectedIndex = index;
-				}
-
-				const form: HTMLElement | null =
-					document.getElementById('cardChangeForm');
-				if (form) {
-					(form as HTMLFormElement).submit();
-				}
+				(
+					document.querySelector(
+						'select[id="cardChangeForm:cardtype"]'
+					) as HTMLSelectElement
+				).selectedIndex = index;
+				(document.getElementById('cardChangeForm') as HTMLFormElement).submit();
 			}, index);
 			await sleep(INTERVAL);
 		}

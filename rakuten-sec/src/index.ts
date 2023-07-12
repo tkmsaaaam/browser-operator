@@ -78,21 +78,19 @@ const sleep = (time: number): Promise<void> =>
 	};
 
 	const asset: Asset = await page.evaluate((asset: Asset) => {
-		const totalAmount = document.querySelector(
-			'td[class="R1 B3 f105p"] span[class="fb"]'
-		);
-		if (totalAmount)
-			asset.total.amount = (totalAmount as HTMLSpanElement).innerText;
-		const totalAmountDiff = document.querySelector('span[class="PLY"]');
-		if (totalAmountDiff)
-			asset.total.diff = (totalAmountDiff as HTMLSpanElement).innerText;
+		asset.total.amount = (
+			document.querySelector(
+				'td[class="R1 B3 f105p"] span[class="fb"]'
+			) as HTMLSpanElement
+		).innerText;
+		asset.total.diff = (
+			document.querySelector('span[class="PLY"]') as HTMLSpanElement
+		).innerText;
 
 		const tableProcessData = document.getElementById('table_possess_data');
 		if (!tableProcessData) return asset;
 		const possessList = tableProcessData.getElementsByTagName('tr');
-		if (!possessList) return asset;
-		const possessCount = possessList.length;
-		for (let index = 3; index < possessCount; index++) {
+		for (let index = 3; index < possessList.length; index++) {
 			const dataRaw = possessList[index].getElementsByTagName('td');
 			const securityType = dataRaw[0].innerText;
 			if (securityType == '米国株式') {
