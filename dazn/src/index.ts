@@ -64,12 +64,12 @@ const sleep = (time: number): Promise<void> =>
 				events.push(event);
 			}
 
-			const f2Title = f1Table?.nextSibling as HTMLHeadElement;
+			const f2Title = f1Table?.nextSibling?.nextSibling as HTMLHeadElement;
 			if (
 				f2Title &&
 				(f2Title as HTMLHeadElement).innerText.indexOf('F2') != -1
 			) {
-				const f2Table = f2Title.nextSibling as HTMLTableElement;
+				const f2Table = f2Title.nextSibling?.nextSibling as HTMLTableElement;
 				for (let j = 0; j < 4; j++) {
 					const event: Event = makeEvent('Formula2', f2Table, j);
 					events.push(event);
