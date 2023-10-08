@@ -1,6 +1,5 @@
 import puppeteer from 'puppeteer-core';
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { getPassword } from './authentication';
 
 type Index = {
 	current: string;
@@ -52,15 +51,27 @@ const sleep = (time: number): Promise<void> =>
 	new Promise(resolve => setTimeout(resolve, time * 1000));
 
 (async () => {
-	if (!process.env.USERNAME || !process.env.PASSWORD) return;
+	const username = process.env.USERNAME;
+	if (!username) return undefined;
+	if (!username) {
+		console.error(
+			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env'
+		);
+		return;
+	}
+	const password = getPassword(username);
+	if (!password) {
+		console.error('password is not present in KeyChainAccess. Set service: RAKUTEN_SEC, Account: username, Password: password.');
+		return;
+	}
 	const browser = await puppeteer.launch({
 		channel: 'chrome',
 		headless: true,
 	});
 	const page = await browser.newPage();
 	await page.goto(LOGIN_URL);
-	await page.type('input[id="form-login-id"]', process.env.USERNAME);
-	await page.type('input[id="form-login-pass"]', process.env.PASSWORD);
+	await page.type('input[id="form-login-id"]', username);
+	await page.type('input[id="form-login-pass"]', password);
 	await page.click('button[id="login-btn"]');
 	await sleep(INTERVAL);
 	const bvSessionId = page.url().split(';')[1].split('?')[0];
