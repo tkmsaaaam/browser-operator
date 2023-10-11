@@ -402,6 +402,16 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 		return list;
 	}, []);
 
+	asset.possessList = asset.possessList.sort((f, s) => {
+		if (f.securityType > s.securityType) return -1;
+		if (f.securityType < s.securityType) return 1;
+		if (f.accountType > s.accountType) return -1;
+		if (f.accountType < s.accountType) return 1;
+		if (f.profitRate > s.profitRate) return -1;
+		if (f.profitRate < s.profitRate) return 1;
+		return 0;
+	});
+
 	const result: Result = {
 		market: market,
 		asset: asset,
