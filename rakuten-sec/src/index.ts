@@ -77,48 +77,19 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 	return page.url().split(';')[1].split('?')[0];
 };
 
-(async () => {
-	const username = process.env.USERNAME;
-	if (!username) {
-		console.error(
-			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env'
-		);
-		return;
-	}
-	const password = getPassword(username);
-	if (!password) {
-		console.error(
-			'password is not present in KeyChainAccess. Set service: RAKUTEN_SEC, Account: username, Password: password.'
-		);
-		return;
-	}
-	const browser = await puppeteer.launch({
-		channel: 'chrome',
-		headless: true,
-	});
-	const page = await browser.newPage();
-	await page.goto(LOGIN_URL);
-	await page.type('input[id="form-login-id"]', username);
-	await page.type('input[id="form-login-pass"]', password);
-	await page.click('button[id="login-btn"]');
-
-	const bvSessionId = await getBvSessionId(page);
-
-	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
-
-	const initializedIndex: Index = {
+const makeMarket = async (page: Page): Promise<Market> => {
+	const index: Index = {
 		current: 0,
 		diffAmount: 0,
 		diffRate: 0,
 		dateTime: '0',
 	};
 
-	const initializedMarket: Market = {
-		yenPerDollar: initializedIndex,
-		bonds10: initializedIndex,
+	const market: Market = {
+		yenPerDollar: index,
+		bonds10: index,
 	};
-
-	const market: Market = await page.evaluate((resultMarcket: Market) => {
+	return await page.evaluate((resultMarcket: Market) => {
 		for (let index = 0; index < 20; index++) {
 			const target = document.querySelector(
 				'td[id="auto_update_market_index_exchange_XXX31_ask"]'
@@ -177,20 +148,15 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 			break;
 		}
 		return resultMarcket;
-	}, initializedMarket);
+	}, market);
+};
 
-	await page.goto(
-		ALL_ASSET_LIST_URL +
-			bvSessionId +
-			'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn='
-	);
-
-	const initializedAsset: Asset = {
+const makeAsset = async (page: Page): Promise<Asset> => {
+	const asset: Asset = {
 		total: { amount: 0, diff: 0, diffRate: 0 },
 		possessList: [],
 	};
-
-	const asset: Asset = await page.evaluate((asset: Asset) => {
+	return await page.evaluate((asset: Asset) => {
 		for (let index = 0; index < 10; index++) {
 			const target = document.querySelector(
 				'td[class="R1 B3 f105p"] span[class="fb"]'
@@ -351,10 +317,11 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 			break;
 		}
 		return asset;
-	}, initializedAsset);
+	}, asset);
+};
 
-	await page.goto(FAVORITE_LIST + bvSessionId + '?eventType=init');
-	const favoriteList: Favorite[] = await page.evaluate((list: Favorite[]) => {
+const makeFavorite = async (page: Page): Promise<Favorite[]> => {
+	return await page.evaluate((list: Favorite[]) => {
 		for (let index = 0; index < 20; index++) {
 			const target = document.getElementsByClassName('tbl-data-01');
 			if (!target) {
@@ -370,30 +337,19 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 				index < trList.getElementsByTagName('tr').length - 1;
 				index++
 			) {
-				const element = trList.getElementsByTagName('tr')[index];
-				const code = Number(element.getElementsByTagName('td')[1].innerText);
-				const name = element.getElementsByTagName('td')[3].innerText;
-				const market = element.getElementsByTagName('td')[6].innerText;
-				const current = Number(
-					element.getElementsByTagName('td')[7].innerText.replace(/↓|↑|,/g, '')
-				);
-				const updatedAt = element.getElementsByTagName('td')[8].innerText;
-				const diff = Number(element.getElementsByTagName('td')[9].innerText);
-				const diffRate = Number(
-					element.getElementsByTagName('td')[10].innerText.replace('%', '')
-				);
-				const transaction = Number(
-					element.getElementsByTagName('td')[11].innerText.replace(/株|,/g, '')
-				);
+				const element = trList
+					.getElementsByTagName('tr')
+					// eslint-disable-next-line no-unexpected-multiline
+					[index].getElementsByTagName('td');
 				const favorite: Favorite = {
-					code: code,
-					name: name,
-					market: market,
-					current: current,
-					updatedAt: updatedAt,
-					diff: diff,
-					diffRate: diffRate,
-					transaction: transaction,
+					code: Number(element[1].innerText),
+					name: element[3].innerText,
+					market: element[6].innerText,
+					current: Number(element[7].innerText.replace(/↓|↑|,/g, '')),
+					updatedAt: element[8].innerText,
+					diff: Number(element[9].innerText),
+					diffRate: Number(element[10].innerText.replace('%', '')),
+					transaction: Number(element[11].innerText.replace(/株|,/g, '')),
 				};
 				list.push(favorite);
 			}
@@ -401,6 +357,47 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 		}
 		return list;
 	}, []);
+};
+
+(async () => {
+	const username = process.env.USERNAME;
+	if (!username) {
+		console.error(
+			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env'
+		);
+		return;
+	}
+	const password = getPassword(username);
+	if (!password) {
+		console.error(
+			'password is not present in KeyChainAccess. Set service: RAKUTEN_SEC, Account: username, Password: password.'
+		);
+		return;
+	}
+	const browser = await puppeteer.launch({
+		channel: 'chrome',
+		headless: true,
+	});
+	const page = await browser.newPage();
+	await page.goto(LOGIN_URL);
+	await page.type('input[id="form-login-id"]', username);
+	await page.type('input[id="form-login-pass"]', password);
+	await page.click('button[id="login-btn"]');
+
+	const bvSessionId = await getBvSessionId(page);
+
+	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
+	const market = await makeMarket(page);
+
+	await page.goto(
+		ALL_ASSET_LIST_URL +
+			bvSessionId +
+			'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn='
+	);
+
+	const asset = await makeAsset(page);
+	await page.goto(FAVORITE_LIST + bvSessionId + '?eventType=init');
+	const favoriteList = await makeFavorite(page);
 
 	asset.possessList = asset.possessList.sort((f, s) => {
 		if (f.securityType > s.securityType) return -1;
