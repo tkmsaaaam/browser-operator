@@ -1,6 +1,13 @@
 import puppeteer, { Page } from 'puppeteer-core';
 import { getPassword } from './authentication';
 
+type IndexStrings = {
+	current: string;
+	diffAmount: string;
+	diffRate: string;
+	dateTime: string;
+};
+
 type Index = {
 	current: number;
 	diffAmount: number;
@@ -8,9 +15,19 @@ type Index = {
 	dateTime: string;
 };
 
+type MarketStrings = {
+	yenPerDollar: IndexStrings;
+	bonds10: IndexStrings;
+};
+
 type Market = {
 	yenPerDollar: Index;
 	bonds10: Index;
+};
+
+type AssetStrings = {
+	total: TotalStrings;
+	possessList: PossessStrings[];
 };
 
 type Asset = {
@@ -18,10 +35,27 @@ type Asset = {
 	possessList: Possess[];
 };
 
+type TotalStrings = {
+	amount: string;
+	diff: string;
+};
+
 type Total = {
 	amount: number;
 	diff: number;
 	diffRate: number;
+};
+
+type PossessStrings = {
+	securityType: string;
+	name: string;
+	accountType: string;
+	buyPrice: string;
+	currentPrice: string;
+	diff: string;
+	count: string;
+	totalAmount: string;
+	profit: string;
 };
 
 type Possess = {
@@ -38,6 +72,16 @@ type Possess = {
 	profitRate: number;
 };
 
+type FavoriteStrings = {
+	code: string;
+	name: string;
+	market: string;
+	current: string;
+	updatedAt: string;
+	diff: string;
+	diffRate: string;
+	transaction: string;
+};
 type Favorite = {
 	code: number;
 	name: string;
@@ -77,19 +121,19 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 	return page.url().split(';')[1].split('?')[0];
 };
 
-const makeMarket = async (page: Page): Promise<Market> => {
-	const index: Index = {
-		current: 0,
-		diffAmount: 0,
-		diffRate: 0,
+const makeMarketStrings = async (page: Page): Promise<MarketStrings> => {
+	const indexStrings: IndexStrings = {
+		current: '0',
+		diffAmount: '0',
+		diffRate: '0',
 		dateTime: '0',
 	};
 
-	const market: Market = {
-		yenPerDollar: index,
-		bonds10: index,
+	const market: MarketStrings = {
+		yenPerDollar: indexStrings,
+		bonds10: indexStrings,
 	};
-	return await page.evaluate((resultMarcket: Market) => {
+	return await page.evaluate((resultMarcket: MarketStrings) => {
 		for (let index = 0; index < 20; index++) {
 			const target = document.querySelector(
 				'td[id="auto_update_market_index_exchange_XXX31_ask"]'
@@ -99,47 +143,37 @@ const makeMarket = async (page: Page): Promise<Market> => {
 				continue;
 			}
 
-			resultMarcket.yenPerDollar.current = Number(
-				(
-					document.querySelector(
-						'td[id="auto_update_market_index_exchange_XXX31_ask"]'
-					) as HTMLTableElement
-				).innerText
-			);
-			resultMarcket.yenPerDollar.diffAmount = Number(
-				(
-					document.querySelector(
-						'td[id="auto_update_market_index_exchange_XXX31_net_change"]'
-					) as HTMLTableElement
-				).innerText
-			);
-			resultMarcket.yenPerDollar.diffRate = Number(
-				(
-					document.querySelector(
-						'td[id="auto_update_market_index_exchange_XXX31_bid_percent_change"]'
-					) as HTMLTableElement
-				).innerText.replace('%', '')
-			);
+			resultMarcket.yenPerDollar.current = (
+				document.querySelector(
+					'td[id="auto_update_market_index_exchange_XXX31_ask"]'
+				) as HTMLTableElement
+			).innerText;
+			resultMarcket.yenPerDollar.diffAmount = (
+				document.querySelector(
+					'td[id="auto_update_market_index_exchange_XXX31_net_change"]'
+				) as HTMLTableElement
+			).innerText;
+			resultMarcket.yenPerDollar.diffRate = (
+				document.querySelector(
+					'td[id="auto_update_market_index_exchange_XXX31_bid_percent_change"]'
+				) as HTMLTableElement
+			).innerText;
 			resultMarcket.yenPerDollar.dateTime = (
 				document.querySelector(
 					'td[id="auto_update_market_index_exchange_XXX31_now_date"]'
 				) as HTMLTableElement
 			).innerText;
 
-			resultMarcket.bonds10.current = Number(
-				(
-					document.querySelector(
-						'td[id="auto_update_market_index_bond_BD005_annualized_yield"]'
-					) as HTMLTableElement
-				).innerText
-			);
-			resultMarcket.bonds10.diffRate = Number(
-				(
-					document.querySelector(
-						'td[id="auto_update_market_index_bond_BD005_net_change"]'
-					) as HTMLTableElement
-				).innerText.replace('%', '')
-			);
+			resultMarcket.bonds10.current = (
+				document.querySelector(
+					'td[id="auto_update_market_index_bond_BD005_annualized_yield"]'
+				) as HTMLTableElement
+			).innerText;
+			resultMarcket.bonds10.diffRate = (
+				document.querySelector(
+					'td[id="auto_update_market_index_bond_BD005_net_change"]'
+				) as HTMLTableElement
+			).innerText;
 			resultMarcket.bonds10.dateTime = (
 				document.querySelector(
 					'td[id="auto_update_market_index_bond_BD005_now_date"]'
@@ -151,12 +185,28 @@ const makeMarket = async (page: Page): Promise<Market> => {
 	}, market);
 };
 
-const makeAsset = async (page: Page): Promise<Asset> => {
-	const asset: Asset = {
-		total: { amount: 0, diff: 0, diffRate: 0 },
+const makeIndex = (indexStrings: IndexStrings): Index => {
+	return {
+		current: Number(indexStrings.current),
+		diffAmount: Number(indexStrings.diffAmount),
+		diffRate: Number(indexStrings.diffRate.replace('%', '')),
+		dateTime: indexStrings.dateTime,
+	};
+};
+
+const makeMarket = (marketStrings: MarketStrings): Market => {
+	return {
+		yenPerDollar: makeIndex(marketStrings.yenPerDollar),
+		bonds10: makeIndex(marketStrings.bonds10),
+	};
+};
+
+const makeAssetStrings = async (page: Page): Promise<AssetStrings> => {
+	const asset: AssetStrings = {
+		total: { amount: '0', diff: '0' },
 		possessList: [],
 	};
-	return await page.evaluate((asset: Asset) => {
+	return await page.evaluate((asset: AssetStrings) => {
 		for (let index = 0; index < 10; index++) {
 			const target = document.querySelector(
 				'td[class="R1 B3 f105p"] span[class="fb"]'
@@ -166,21 +216,15 @@ const makeAsset = async (page: Page): Promise<Asset> => {
 				continue;
 			}
 
-			const amount = Number(
-				(
-					document.querySelector(
-						'td[class="R1 B3 f105p"] span[class="fb"]'
-					) as HTMLSpanElement
-				).innerText.replace(/円|,/g, '')
-			);
-			asset.total.amount = amount;
-			const diff = Number(
-				(
-					document.querySelector('span[class="PLY"]') as HTMLSpanElement
-				).innerText.replace(/円|,/g, '')
-			);
-			asset.total.diff = diff;
-			asset.total.diffRate = (diff / amount) * 100;
+			asset.total.amount = (
+				document.querySelector(
+					'td[class="R1 B3 f105p"] span[class="fb"]'
+				) as HTMLSpanElement
+			).innerText;
+
+			asset.total.diff = (
+				document.querySelector('span[class="PLY"]') as HTMLSpanElement
+			).innerText;
 
 			const tableProcessData = document.getElementById('table_possess_data');
 			if (!tableProcessData) return asset;
@@ -189,127 +233,29 @@ const makeAsset = async (page: Page): Promise<Asset> => {
 				const dataRaw = possessList[index].getElementsByTagName('td');
 				const securityType = dataRaw[0].innerText;
 				if (securityType == '米国株式') {
-					const currentPrice = Number(
-						dataRaw[6]
-							.getElementsByTagName('div')[0]
-							.innerText.replace(/USD|,/g, '')
-					);
-					const diff = Number(
-						dataRaw[6]
-							.getElementsByTagName('div')[1]
-							.innerText.replace(/USD|,/g, '')
-					);
-					const totalAmount = Number(
-						dataRaw[7]
-							.getElementsByTagName('div')[0]
-							.innerText.replace(/円|,/g, '')
-					);
-					const profit = Number(
-						dataRaw[7]
-							.getElementsByTagName('div')[2]
-							.innerText.replace(/円|,|\n|\t/g, '')
-					);
-					let profitRate = 0;
-					if (profit >= 0) {
-						profitRate = profit / totalAmount;
-					} else {
-						profitRate = profit / (totalAmount - profit);
-					}
-
-					const possess: Possess = {
+					const possess: PossessStrings = {
 						securityType: securityType,
 						name: dataRaw[1].innerText,
 						accountType: dataRaw[3].innerText,
-						buyPrice: Number(dataRaw[5].innerText.replace(/USD|,/g, '')),
-						currentPrice: currentPrice,
-						diff: diff,
-						diffRate: (diff / currentPrice) * 100,
-						count: Number(dataRaw[4].innerText.replace(/株|,/g, '')),
-						totalAmount: totalAmount,
-						profit: profit,
-						profitRate: profitRate * 100,
+						buyPrice: dataRaw[5].innerText,
+						currentPrice: dataRaw[6].getElementsByTagName('div')[0].innerText,
+						diff: dataRaw[6].getElementsByTagName('div')[1].innerText,
+						count: dataRaw[4].innerText,
+						totalAmount: dataRaw[7].getElementsByTagName('div')[0].innerText,
+						profit: dataRaw[7].getElementsByTagName('div')[2].innerText,
 					};
 					asset.possessList.push(possess);
-				} else if (securityType == '投資信託') {
-					const currentPrice = Number(
-						dataRaw[5]
-							.getElementsByTagName('div')[0]
-							.innerText.replace(/円|,/g, '')
-					);
-					const diff = Number(
-						dataRaw[5]
-							.getElementsByTagName('div')[1]
-							.innerText.replace(/円|,/g, '')
-					);
-					const totalAmount = Number(
-						dataRaw[6]
-							.getElementsByTagName('div')[0]
-							.innerText.replace(/円|,/g, '')
-					);
-					const profit = Number(
-						dataRaw[6]
-							.getElementsByTagName('div')[2]
-							.innerText.replace(/円|,|\n|\t/g, '')
-					);
-					let profitRate = 0;
-					if (profit >= 0) {
-						profitRate = profit / totalAmount;
-					} else {
-						profitRate = profit / (totalAmount - profit);
-					}
-					const possess: Possess = {
+				} else {
+					const possess: PossessStrings = {
 						securityType: securityType,
 						name: dataRaw[1].innerText,
-						accountType: dataRaw[2].innerText.replace('\n', ''),
-						buyPrice: Number(dataRaw[4].innerText.replace(/円|,/g, '')),
-						currentPrice: currentPrice,
-						diff: diff,
-						diffRate: (diff / currentPrice) * 100,
-						count: Number(dataRaw[3].innerText.replace(/口|,/g, '')),
-						totalAmount: totalAmount,
-						profit: profit,
-						profitRate: profitRate * 100,
-					};
-					asset.possessList.push(possess);
-				} else if (securityType == '外貨預り金') {
-					const currentPrice = Number(
-						dataRaw[5]
-							.getElementsByTagName('div')[0]
-							.innerText.replace(/円\/USD|,/g, '')
-					);
-					const diff = Number(
-						dataRaw[5]
-							.getElementsByTagName('div')[1]
-							.innerText.replace(/円|,/g, '')
-					);
-					const totalAmount = Number(
-						dataRaw[6]
-							.getElementsByTagName('div')[0]
-							.innerText.replace(/円|,/g, '')
-					);
-					const profit = Number(
-						dataRaw[6]
-							.getElementsByTagName('div')[2]
-							.innerText.replace(/円|,|\n|\t/g, '')
-					);
-					let profitRate = 0;
-					if (profit >= 0) {
-						profitRate = profit / totalAmount;
-					} else {
-						profitRate = profit / (totalAmount - profit);
-					}
-					const possess: Possess = {
-						securityType: securityType,
-						name: dataRaw[1].innerText,
-						accountType: dataRaw[2].innerText.replace('\n', ''),
-						buyPrice: Number(dataRaw[4].innerText.replace(/円\/USD|,/g, '')),
-						currentPrice: currentPrice,
-						diff: diff,
-						diffRate: (diff / currentPrice) * 100,
-						count: Number(dataRaw[3].innerText.replace(/USD|,/g, '')),
-						totalAmount: totalAmount,
-						profit: profit,
-						profitRate: profitRate * 100,
+						accountType: dataRaw[2].innerText,
+						buyPrice: dataRaw[4].innerText,
+						currentPrice: dataRaw[5].getElementsByTagName('div')[0].innerText,
+						diff: dataRaw[5].getElementsByTagName('div')[1].innerText,
+						count: dataRaw[3].innerText,
+						totalAmount: dataRaw[6].getElementsByTagName('div')[0].innerText,
+						profit: dataRaw[6].getElementsByTagName('div')[2].innerText,
 					};
 					asset.possessList.push(possess);
 				}
@@ -320,8 +266,53 @@ const makeAsset = async (page: Page): Promise<Asset> => {
 	}, asset);
 };
 
-const makeFavorite = async (page: Page): Promise<Favorite[]> => {
-	return await page.evaluate((list: Favorite[]) => {
+const makeTotal = (totalStrings: TotalStrings): Total => {
+	const amount = Number(totalStrings.amount.replace(/円|,/g, ''));
+	const diff = Number(totalStrings.diff.replace(/円|,/g, ''));
+	return {
+		amount: amount,
+		diff: diff,
+		diffRate: (diff / amount) * 100,
+	};
+};
+
+const makePossess = (possessStrings: PossessStrings): Possess => {
+	const currentPrice = Number(
+		possessStrings.currentPrice.replace(/円\/USD|円|USD|,/g, '')
+	);
+	const diff = Number(possessStrings.diff.replace(/円|USD|円\/USD|,/g, ''));
+	const profit = Number(possessStrings.profit.replace(/円|,|\n|\t/g, ''));
+	const totalAmount = Number(possessStrings.totalAmount.replace(/円|,/g, ''));
+	let profitRate = 0;
+	if (profit >= 0) {
+		profitRate = profit / totalAmount;
+	} else {
+		profitRate = profit / (totalAmount - profit);
+	}
+	return {
+		securityType: possessStrings.securityType,
+		name: possessStrings.name,
+		accountType: possessStrings.accountType,
+		buyPrice: Number(possessStrings.buyPrice.replace(/円|USD|円\/USD|,/g, '')),
+		currentPrice: currentPrice,
+		diff: diff,
+		diffRate: (diff / currentPrice) * 100,
+		count: Number(possessStrings.count.replace(/口|株|USD|,/g, '')),
+		totalAmount: totalAmount,
+		profit: profit,
+		profitRate: profitRate * 100,
+	};
+};
+
+const makeAsset = (assetStrings: AssetStrings): Asset => {
+	return {
+		total: makeTotal(assetStrings.total),
+		possessList: assetStrings.possessList.map(p => makePossess(p)),
+	};
+};
+
+const makeFavoriteStrings = async (page: Page): Promise<FavoriteStrings[]> => {
+	return await page.evaluate((list: FavoriteStrings[]) => {
 		for (let index = 0; index < 20; index++) {
 			const target = document.getElementsByClassName('tbl-data-01');
 			if (!target) {
@@ -341,15 +332,15 @@ const makeFavorite = async (page: Page): Promise<Favorite[]> => {
 					.getElementsByTagName('tr')
 					// eslint-disable-next-line no-unexpected-multiline
 					[index].getElementsByTagName('td');
-				const favorite: Favorite = {
-					code: Number(element[1].innerText),
+				const favorite: FavoriteStrings = {
+					code: element[1].innerText,
 					name: element[3].innerText,
 					market: element[6].innerText,
-					current: Number(element[7].innerText.replace(/↓|↑|,/g, '')),
+					current: element[7].innerText.replace(/↓|↑|,/g, ''),
 					updatedAt: element[8].innerText,
-					diff: Number(element[9].innerText),
-					diffRate: Number(element[10].innerText.replace('%', '')),
-					transaction: Number(element[11].innerText.replace(/株|,/g, '')),
+					diff: element[9].innerText,
+					diffRate: element[10].innerText.replace('%', ''),
+					transaction: element[11].innerText.replace(/株|,/g, ''),
 				};
 				list.push(favorite);
 			}
@@ -357,6 +348,19 @@ const makeFavorite = async (page: Page): Promise<Favorite[]> => {
 		}
 		return list;
 	}, []);
+};
+
+const makeFavorite = (favoriteStrings: FavoriteStrings): Favorite => {
+	return {
+		code: Number(favoriteStrings.code),
+		name: favoriteStrings.name,
+		market: favoriteStrings.market,
+		current: Number(favoriteStrings.current.replace(/↓|↑|,/g, '')),
+		updatedAt: favoriteStrings.updatedAt,
+		diff: Number(favoriteStrings.diff),
+		diffRate: Number(favoriteStrings.diffRate.replace('%', '')),
+		transaction: Number(favoriteStrings.transaction.replace(/株|,/g, '')),
+	};
 };
 
 (async () => {
@@ -387,7 +391,8 @@ const makeFavorite = async (page: Page): Promise<Favorite[]> => {
 	const bvSessionId = await getBvSessionId(page);
 
 	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
-	const market = await makeMarket(page);
+	const marketStrings = await makeMarketStrings(page);
+	const market = makeMarket(marketStrings);
 
 	await page.goto(
 		ALL_ASSET_LIST_URL +
@@ -395,9 +400,12 @@ const makeFavorite = async (page: Page): Promise<Favorite[]> => {
 			'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn='
 	);
 
-	const asset = await makeAsset(page);
+	const assetStrings = await makeAssetStrings(page);
+	const asset = makeAsset(assetStrings);
+
 	await page.goto(FAVORITE_LIST + bvSessionId + '?eventType=init');
-	const favoriteList = await makeFavorite(page);
+	const favoriteStringsList = await makeFavoriteStrings(page);
+	const favoriteList = favoriteStringsList.map(f => makeFavorite(f));
 
 	asset.possessList = asset.possessList.sort((f, s) => {
 		if (f.securityType > s.securityType) return -1;
