@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer-core';
-import { sleep, INTERVAL } from './index';
+import { sleep } from './index';
 
 export type Asset = {
 	total: Total;
@@ -60,6 +60,7 @@ export const getAsset = async (
 			'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn='
 	);
 
+	await sleep(3);
 	const assetStrings = await makeAssetStrings(page);
 	return makeAsset(assetStrings);
 };
@@ -70,60 +71,49 @@ const makeAssetStrings = async (page: Page): Promise<AssetStrings> => {
 		possessList: [],
 	};
 	return await page.evaluate((asset: AssetStrings) => {
-		for (let index = 0; index < 10; index++) {
-			const target = document.querySelector(
+		asset.total.amount = (
+			document.querySelector(
 				'td[class="R1 B3 f105p"] span[class="fb"]'
-			);
-			if (!target) {
-				sleep(INTERVAL);
-				continue;
+			) as HTMLSpanElement
+		).innerText;
+
+		asset.total.diff = (
+			document.querySelector('span[class="PLY"]') as HTMLSpanElement
+		).innerText;
+
+		const tableProcessData = document.getElementById('table_possess_data');
+		if (!tableProcessData) return asset;
+		const possessList = tableProcessData.getElementsByTagName('tr');
+		for (let index = 3; index < possessList.length; index++) {
+			const dataRaw = possessList[index].getElementsByTagName('td');
+			const securityType = dataRaw[0].innerText;
+			if (securityType == '米国株式') {
+				const possess: PossessStrings = {
+					securityType: securityType,
+					name: dataRaw[1].innerText,
+					accountType: dataRaw[3].innerText,
+					buyPrice: dataRaw[5].innerText,
+					currentPrice: dataRaw[6].getElementsByTagName('div')[0].innerText,
+					diff: dataRaw[6].getElementsByTagName('div')[1].innerText,
+					count: dataRaw[4].innerText,
+					totalAmount: dataRaw[7].getElementsByTagName('div')[0].innerText,
+					profit: dataRaw[7].getElementsByTagName('div')[2].innerText,
+				};
+				asset.possessList.push(possess);
+			} else {
+				const possess: PossessStrings = {
+					securityType: securityType,
+					name: dataRaw[1].innerText,
+					accountType: dataRaw[2].innerText,
+					buyPrice: dataRaw[4].innerText,
+					currentPrice: dataRaw[5].getElementsByTagName('div')[0].innerText,
+					diff: dataRaw[5].getElementsByTagName('div')[1].innerText,
+					count: dataRaw[3].innerText,
+					totalAmount: dataRaw[6].getElementsByTagName('div')[0].innerText,
+					profit: dataRaw[6].getElementsByTagName('div')[2].innerText,
+				};
+				asset.possessList.push(possess);
 			}
-
-			asset.total.amount = (
-				document.querySelector(
-					'td[class="R1 B3 f105p"] span[class="fb"]'
-				) as HTMLSpanElement
-			).innerText;
-
-			asset.total.diff = (
-				document.querySelector('span[class="PLY"]') as HTMLSpanElement
-			).innerText;
-
-			const tableProcessData = document.getElementById('table_possess_data');
-			if (!tableProcessData) return asset;
-			const possessList = tableProcessData.getElementsByTagName('tr');
-			for (let index = 3; index < possessList.length; index++) {
-				const dataRaw = possessList[index].getElementsByTagName('td');
-				const securityType = dataRaw[0].innerText;
-				if (securityType == '米国株式') {
-					const possess: PossessStrings = {
-						securityType: securityType,
-						name: dataRaw[1].innerText,
-						accountType: dataRaw[3].innerText,
-						buyPrice: dataRaw[5].innerText,
-						currentPrice: dataRaw[6].getElementsByTagName('div')[0].innerText,
-						diff: dataRaw[6].getElementsByTagName('div')[1].innerText,
-						count: dataRaw[4].innerText,
-						totalAmount: dataRaw[7].getElementsByTagName('div')[0].innerText,
-						profit: dataRaw[7].getElementsByTagName('div')[2].innerText,
-					};
-					asset.possessList.push(possess);
-				} else {
-					const possess: PossessStrings = {
-						securityType: securityType,
-						name: dataRaw[1].innerText,
-						accountType: dataRaw[2].innerText,
-						buyPrice: dataRaw[4].innerText,
-						currentPrice: dataRaw[5].getElementsByTagName('div')[0].innerText,
-						diff: dataRaw[5].getElementsByTagName('div')[1].innerText,
-						count: dataRaw[3].innerText,
-						totalAmount: dataRaw[6].getElementsByTagName('div')[0].innerText,
-						profit: dataRaw[6].getElementsByTagName('div')[2].innerText,
-					};
-					asset.possessList.push(possess);
-				}
-			}
-			break;
 		}
 		return asset;
 	}, asset);

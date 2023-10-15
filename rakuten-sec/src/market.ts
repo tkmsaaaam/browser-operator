@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer-core';
-import { sleep, INTERVAL } from './index';
+import { sleep } from './index';
 
 export type Market = {
 	yenPerDollar: Index;
@@ -31,6 +31,7 @@ export const getMarket = async (
 ): Promise<Market> => {
 	const MARKET_URL = 'https://member.rakuten-sec.co.jp/app/market_top.do;';
 	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
+	await sleep(3);
 	const marketStrings = await makeMarketStrings(page);
 	return makeMarket(marketStrings);
 };
@@ -48,53 +49,42 @@ const makeMarketStrings = async (page: Page): Promise<MarketStrings> => {
 		bonds10: indexStrings,
 	};
 	return await page.evaluate((resultMarcket: MarketStrings) => {
-		for (let index = 0; index < 20; index++) {
-			const target = document.querySelector(
+		resultMarcket.yenPerDollar.current = (
+			document.querySelector(
 				'td[id="auto_update_market_index_exchange_XXX31_ask"]'
-			);
-			if (!target) {
-				sleep(INTERVAL);
-				continue;
-			}
+			) as HTMLTableElement
+		).innerText;
+		resultMarcket.yenPerDollar.diffAmount = (
+			document.querySelector(
+				'td[id="auto_update_market_index_exchange_XXX31_net_change"]'
+			) as HTMLTableElement
+		).innerText;
+		resultMarcket.yenPerDollar.diffRate = (
+			document.querySelector(
+				'td[id="auto_update_market_index_exchange_XXX31_bid_percent_change"]'
+			) as HTMLTableElement
+		).innerText;
+		resultMarcket.yenPerDollar.dateTime = (
+			document.querySelector(
+				'td[id="auto_update_market_index_exchange_XXX31_now_date"]'
+			) as HTMLTableElement
+		).innerText;
 
-			resultMarcket.yenPerDollar.current = (
-				document.querySelector(
-					'td[id="auto_update_market_index_exchange_XXX31_ask"]'
-				) as HTMLTableElement
-			).innerText;
-			resultMarcket.yenPerDollar.diffAmount = (
-				document.querySelector(
-					'td[id="auto_update_market_index_exchange_XXX31_net_change"]'
-				) as HTMLTableElement
-			).innerText;
-			resultMarcket.yenPerDollar.diffRate = (
-				document.querySelector(
-					'td[id="auto_update_market_index_exchange_XXX31_bid_percent_change"]'
-				) as HTMLTableElement
-			).innerText;
-			resultMarcket.yenPerDollar.dateTime = (
-				document.querySelector(
-					'td[id="auto_update_market_index_exchange_XXX31_now_date"]'
-				) as HTMLTableElement
-			).innerText;
-
-			resultMarcket.bonds10.current = (
-				document.querySelector(
-					'td[id="auto_update_market_index_bond_BD005_annualized_yield"]'
-				) as HTMLTableElement
-			).innerText;
-			resultMarcket.bonds10.diffRate = (
-				document.querySelector(
-					'td[id="auto_update_market_index_bond_BD005_net_change"]'
-				) as HTMLTableElement
-			).innerText;
-			resultMarcket.bonds10.dateTime = (
-				document.querySelector(
-					'td[id="auto_update_market_index_bond_BD005_now_date"]'
-				) as HTMLTableElement
-			).innerText;
-			break;
-		}
+		resultMarcket.bonds10.current = (
+			document.querySelector(
+				'td[id="auto_update_market_index_bond_BD005_annualized_yield"]'
+			) as HTMLTableElement
+		).innerText;
+		resultMarcket.bonds10.diffRate = (
+			document.querySelector(
+				'td[id="auto_update_market_index_bond_BD005_net_change"]'
+			) as HTMLTableElement
+		).innerText;
+		resultMarcket.bonds10.dateTime = (
+			document.querySelector(
+				'td[id="auto_update_market_index_bond_BD005_now_date"]'
+			) as HTMLTableElement
+		).innerText;
 		return resultMarcket;
 	}, market);
 };

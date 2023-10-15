@@ -19,10 +19,10 @@ export const sleep = (time: number): Promise<void> =>
 
 const getBvSessionId = async (page: Page): Promise<string> => {
 	for (let index = 0; index < 10; index++) {
+		await sleep(INTERVAL);
 		if (page.url().includes('BV_SessionID=')) {
 			return page.url().split(';')[1].split('?')[0];
 		}
-		await sleep(INTERVAL);
 	}
 	return page.url().split(';')[1].split('?')[0];
 };
