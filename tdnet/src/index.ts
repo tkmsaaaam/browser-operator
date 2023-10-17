@@ -11,6 +11,15 @@ type Disclosure = {
 	update: string;
 };
 
+const makeDateDiff = (): number => {
+	for (let index = 0; index < process.argv.length; index++) {
+		if (process.argv[index].startsWith('diff=')) {
+			return Number(process.argv[index].replace('diff=', ''));
+		}
+	}
+	return 0;
+};
+
 const sleep = (time: number): Promise<void> =>
 	new Promise(resolve => setTimeout(resolve, time * 1000));
 
@@ -40,8 +49,10 @@ const pushDisclosureList = async (
 	}, disclosureList);
 };
 
-const makeToday = () => {
+const makeTargetDate = (diff: number): string => {
 	const currentDate = new Date();
+
+	currentDate.setDate(currentDate.getDate() - diff);
 
 	const year = currentDate.getFullYear();
 	const month = currentDate.getMonth() + 1;
@@ -66,8 +77,10 @@ const makePath = (i: number, date: string) => {
 		headless: true,
 	});
 	const page = await browser.newPage();
-	const today = makeToday();
-	const path = makePath(1, today);
+	const dateDiff = makeDateDiff();
+
+	const targetDate = makeTargetDate(dateDiff);
+	const path = makePath(1, targetDate);
 	await page.goto(BASE_URL + path);
 
 	await sleep(3);
@@ -80,7 +93,7 @@ const makePath = (i: number, date: string) => {
 	let disclosureList = await pushDisclosureList(page, []);
 
 	for (let index = 2; index < page_size + 2; index++) {
-		const p = makePath(index, today);
+		const p = makePath(index, targetDate);
 		await page.goto(BASE_URL + p);
 		await sleep(3);
 		const l = await pushDisclosureList(page, []);
