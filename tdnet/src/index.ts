@@ -2,7 +2,7 @@ import puppeteer, { Page } from 'puppeteer-core';
 import util from 'util';
 
 type Disclosure = {
-	time: string;
+	datetime: string;
 	code: string;
 	name: string;
 	title: string;
@@ -31,10 +31,14 @@ const pushDisclosureList = async (
 		const table = document.getElementById('main-list-table');
 		if (!table) return list;
 		const data = table.getElementsByTagName('tr');
+		const date = document
+			.getElementById('kaiji-date-1')
+			?.innerText.replace(/年|月/g, '/')
+			.replace('日', ' ');
 		for (let index = 0; index < data.length; index++) {
 			const row = data[index];
 			const disclosure: Disclosure = {
-				time: row.getElementsByTagName('td')[0].innerText,
+				datetime: date + row.getElementsByTagName('td')[0].innerText,
 				code: row.getElementsByTagName('td')[1].innerText,
 				name: row.getElementsByTagName('td')[2].innerText,
 				title: row.getElementsByTagName('td')[3].innerText,
@@ -104,8 +108,8 @@ const makePath = (i: number, date: string) => {
 	}
 
 	disclosureList = disclosureList.sort((f, s) => {
-		if (f.time < s.time) return -1;
-		if (f.time > s.time) return 1;
+		if (f.datetime < s.datetime) return -1;
+		if (f.datetime > s.datetime) return 1;
 		if (f.code < s.code) return -1;
 		if (f.code > s.code) return 1;
 		return 0;
