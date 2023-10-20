@@ -31,9 +31,10 @@ const pushDisclosureList = async (
 		const table = document.getElementById('main-list-table');
 		if (!table) return list;
 		const data = table.getElementsByTagName('tr');
-		const date = document
-			.getElementById('kaiji-date-1')
-			?.innerText.replace(/年|月/g, '/')
+		const date = (
+			document.getElementById('kaiji-date-1') as HTMLDivElement
+		).innerText
+			.replace(/年|月/g, '/')
 			.replace('日', ' ');
 		for (let index = 0; index < data.length; index++) {
 			const row = data[index];
