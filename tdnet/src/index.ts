@@ -16,12 +16,43 @@ type Result = {
 	all: Disclosure[];
 };
 
-const makeDateDiff = (): number => {
+const makeStart = (): undefined | number => {
+	const ARG_NAME = 'start';
+	const LONG_ARG_KEY = ARG_NAME + '=';
+	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
 	for (let index = 0; index < process.argv.length; index++) {
-		if (process.argv[index].startsWith('diff=')) {
-			return Number(process.argv[index].replace('diff=', ''));
-		} else if (process.argv[index].startsWith('d=')) {
-			return Number(process.argv[index].replace('d=', ''));
+		if (process.argv[index].startsWith(LONG_ARG_KEY)) {
+			return Number(process.argv[index].replace(LONG_ARG_KEY, ''));
+		} else if (process.argv[index].startsWith(SHORT_ARG_KEY)) {
+			return Number(process.argv[index].replace(SHORT_ARG_KEY, ''));
+		}
+	}
+	return undefined;
+};
+
+const makeEnd = (): number => {
+	const ARG_NAME = 'end';
+	const LONG_ARG_KEY = ARG_NAME + '=';
+	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
+	for (let index = 0; index < process.argv.length; index++) {
+		if (process.argv[index].startsWith(LONG_ARG_KEY)) {
+			return Number(process.argv[index].replace(LONG_ARG_KEY, ''));
+		} else if (process.argv[index].startsWith(SHORT_ARG_KEY)) {
+			return Number(process.argv[index].replace(SHORT_ARG_KEY, ''));
+		}
+	}
+	return 0;
+};
+
+const makeDateDiff = (): number => {
+	const ARG_NAME = 'diff';
+	const LONG_ARG_KEY = ARG_NAME + '=';
+	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
+	for (let index = 0; index < process.argv.length; index++) {
+		if (process.argv[index].startsWith(LONG_ARG_KEY)) {
+			return Number(process.argv[index].replace(LONG_ARG_KEY, ''));
+		} else if (process.argv[index].startsWith(SHORT_ARG_KEY)) {
+			return Number(process.argv[index].replace(SHORT_ARG_KEY, ''));
 		}
 	}
 	return 0;
@@ -46,10 +77,7 @@ const makeTargetDate = (diff: number): string => {
 const sleep = (time: number): Promise<void> =>
 	new Promise(resolve => setTimeout(resolve, time * 1000));
 
-const pushDisclosureList = async (
-	page: Page,
-	disclosureList: Disclosure[]
-): Promise<Disclosure[]> => {
+const pushDisclosureList = async (page: Page): Promise<Disclosure[]> => {
 	return await page.evaluate((list: Disclosure[]): Disclosure[] => {
 		const table = document.getElementById('main-list-table');
 		if (!table) return list;
@@ -74,7 +102,38 @@ const pushDisclosureList = async (
 			list.push(disclosure);
 		}
 		return list;
-	}, disclosureList);
+	}, []);
+};
+
+const makePath = (i: number, date: string) => {
+	return 'I_list_' + i.toString().padStart(3, '0') + '_' + date + '.html';
+};
+
+const getListFromADay = async (
+	dateDiff: number,
+	page: Page,
+	disclosureList: Disclosure[]
+) => {
+	const BASE_URL = 'https://www.release.tdnet.info/inbs/';
+	const targetDate = makeTargetDate(dateDiff);
+	let page_size = 0;
+
+	for (let index = 1; index < page_size + 2; index++) {
+		const p = makePath(index, targetDate);
+		await page.goto(BASE_URL + p);
+		await sleep(3);
+		if (index == 1) {
+			page_size = await page.evaluate((result_page_size: number): number => {
+				result_page_size =
+					document.getElementsByClassName('pager-M').length / 2;
+				return result_page_size;
+			}, page_size);
+		}
+		const l = await pushDisclosureList(page);
+		for (let i = 0; i < l.length; i++) {
+			disclosureList.push(l[i]);
+		}
+	}
 };
 
 const makeTargetCode = (): undefined | string => {
@@ -98,42 +157,24 @@ const sortList = (list: Disclosure[]) => {
 	});
 };
 
-const makePath = (i: number, date: string) => {
-	return 'I_list_' + i.toString().padStart(3, '0') + '_' + date + '.html';
-};
-
 (async () => {
-	const BASE_URL = 'https://www.release.tdnet.info/inbs/';
-
 	const browser = await puppeteer.launch({
 		channel: 'chrome',
 		headless: true,
 	});
 	const page = await browser.newPage();
 
-	const disclosureList = [];
+	const disclosureList: Disclosure[] = [];
 
-	const dateDiff = makeDateDiff();
-	const targetDate = makeTargetDate(dateDiff);
-	let page_size = 0;
-
-	for (let index = 1; index < page_size + 2; index++) {
-		const p = makePath(index, targetDate);
-		await page.goto(BASE_URL + p);
-		await sleep(3);
-		if (index == 1) {
-			page_size = await page.evaluate((result_page_size: number): number => {
-				result_page_size =
-					document.getElementsByClassName('pager-M').length / 2;
-				return result_page_size;
-			}, 1);
+	const start = makeStart();
+	const end = makeEnd();
+	if (start) {
+		for (let i = start; i != end; i--) {
+			await getListFromADay(i, page, disclosureList);
 		}
-
-		const l = await pushDisclosureList(page, []);
-		for (let i = 0; i < l.length; i++) {
-			const element = l[i];
-			disclosureList.push(element);
-		}
+	} else {
+		const dateDiff = makeDateDiff();
+		await getListFromADay(dateDiff, page, disclosureList);
 	}
 
 	const targetCode = makeTargetCode();
