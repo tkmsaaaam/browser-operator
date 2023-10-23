@@ -1,6 +1,7 @@
 import puppeteer, { Page } from 'puppeteer-core';
 import * as dotenv from 'dotenv';
 dotenv.config();
+import { getPassword } from './authentication';
 
 const LOGIN_URL = 'https://www.rakuten-card.co.jp/e-navi/index.xhtml';
 const TOP_URL = 'https://www.rakuten-card.co.jp/e-navi/members/index.xhtml';
@@ -38,15 +39,28 @@ const getCardCount = async (page: Page) => {
 };
 
 (async (): Promise<void> => {
-	if (!process.env.EMAIL || !process.env.PASSWORD) return;
+	const username = process.env.EMAIL;
+	if (!username) {
+		console.error(
+			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env'
+		);
+		return;
+	}
+	const password = getPassword(username);
+	if (!password) {
+		console.error(
+			'password is not present in KeyChainAccess. Set service: RAKUTEN_CARD, Account: username, Password: password.'
+		);
+		return;
+	}
 	const browser = await puppeteer.launch({
 		channel: 'chrome',
 		headless: false,
 	});
 	const page = await browser.newPage();
 	await page.goto(LOGIN_URL);
-	await page.type('input[id="u"]', process.env.EMAIL);
-	await page.type('input[id="p"]', process.env.PASSWORD);
+	await page.type('input[id="u"]', username);
+	await page.type('input[id="p"]', password);
 	await page.click('input[id="loginButton"]');
 	await sleep(INTERVAL);
 	await page.goto(TOP_URL);
