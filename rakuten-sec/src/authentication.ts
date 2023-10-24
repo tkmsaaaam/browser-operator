@@ -1,6 +1,4 @@
-import * as dotenv from 'dotenv';
 import { execSync } from 'child_process';
-dotenv.config();
 
 export const getPassword = (account: string): string | undefined => {
 	const password = execSync(

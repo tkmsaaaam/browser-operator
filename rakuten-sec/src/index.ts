@@ -3,6 +3,8 @@ import { getPassword } from './authentication';
 import { Asset, getAsset } from './asset';
 import { Market, getMarket } from './market';
 import { Favorite, getFavoriteList } from './favorite';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 type Result = {
 	market: Market;
