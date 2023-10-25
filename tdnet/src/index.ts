@@ -1,5 +1,7 @@
 import puppeteer, { Page } from 'puppeteer-core';
 import util from 'util';
+import fs from 'fs';
+import path from 'path';
 
 type Disclosure = {
 	datetime: string;
@@ -136,15 +138,28 @@ const getListFromADay = async (
 	}
 };
 
-const makeTargetCode = (): undefined | string => {
+const makeTargetCodes = (): undefined | string[] => {
 	for (let index = 0; index < process.argv.length; index++) {
 		if (process.argv[index].startsWith('code=')) {
-			return process.argv[index].replace('code=', '');
+			return [process.argv[index].replace('code=', '')];
 		} else if (process.argv[index].startsWith('c=')) {
-			return process.argv[index].replace('c=', '');
+			return [process.argv[index].replace('c=', '')];
 		}
 	}
-	return undefined;
+	const codeStrs = fs.readFileSync(
+		path.resolve(__dirname, '../.env/favorite.txt')
+	);
+	const favoriteList = codeStrs.toString().trimEnd().split(',');
+	const codes = [];
+	for (let index = 0; index < favoriteList.length; index++) {
+		const favorite = favoriteList[index];
+		codes.push(favorite);
+	}
+	if (codes.length > 0) {
+		return codes;
+	} else {
+		return undefined;
+	}
 };
 
 const sortList = (list: Disclosure[]) => {
@@ -177,13 +192,16 @@ const sortList = (list: Disclosure[]) => {
 		await getListFromADay(dateDiff, page, disclosureList);
 	}
 
-	const targetCode = makeTargetCode();
+	const targetCodes = makeTargetCodes();
 	const favoriteList = [];
-	if (targetCode) {
+	if (targetCodes) {
 		for (let i = 0; i < disclosureList.length; i++) {
 			const e = disclosureList[i];
-			if (e.code == targetCode) {
-				favoriteList.push(e);
+			for (let index = 0; index < targetCodes.length; index++) {
+				const targetCode = targetCodes[index];
+				if (e.code == targetCode) {
+					favoriteList.push(e);
+				}
 			}
 		}
 	}
