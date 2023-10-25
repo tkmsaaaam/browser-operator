@@ -149,7 +149,7 @@ const makeTargetCodes = (): undefined | string[] => {
 	const codeStrs = fs.readFileSync(
 		path.resolve(__dirname, '../.env/favorite.txt')
 	);
-	const favoriteList = codeStrs.toString().trimEnd().split(',');
+	const favoriteList = codeStrs.toString().replace(/\s/g, '').split(',');
 	const codes = [];
 	for (let index = 0; index < favoriteList.length; index++) {
 		const favorite = favoriteList[index];
