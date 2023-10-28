@@ -107,8 +107,8 @@ const pushDisclosureList = async (page: Page): Promise<Disclosure[]> => {
 	}, []);
 };
 
-const makePath = (i: number, date: string) => {
-	return 'I_list_' + i.toString().padStart(3, '0') + '_' + date + '.html';
+const makePath = (i: number, dateStr: string) => {
+	return 'I_list_' + i.toString().padStart(3, '0') + '_' + dateStr + '.html';
 };
 
 const getListFromADay = async (
@@ -117,19 +117,19 @@ const getListFromADay = async (
 	disclosureList: Disclosure[]
 ) => {
 	const BASE_URL = 'https://www.release.tdnet.info/inbs/';
-	const targetDate = makeTargetDate(dateDiff);
-	let page_size = 0;
+	const targetDateStr = makeTargetDate(dateDiff);
+	let pageSize = 0;
 
-	for (let index = 1; index < page_size + 2; index++) {
-		const p = makePath(index, targetDate);
+	for (let index = 1; index < pageSize + 2; index++) {
+		const p = makePath(index, targetDateStr);
 		await page.goto(BASE_URL + p);
 		await sleep(3);
 		if (index == 1) {
-			page_size = await page.evaluate((result_page_size: number): number => {
+			pageSize = await page.evaluate((result_page_size: number): number => {
 				result_page_size =
 					document.getElementsByClassName('pager-M').length / 2;
 				return result_page_size;
-			}, page_size);
+			}, pageSize);
 		}
 		const l = await pushDisclosureList(page);
 		for (let i = 0; i < l.length; i++) {
@@ -139,17 +139,21 @@ const getListFromADay = async (
 };
 
 const makeTargetCodes = (): undefined | string[] => {
+	const argCodes = [];
 	for (let index = 0; index < process.argv.length; index++) {
 		if (process.argv[index].startsWith('code=')) {
-			return [process.argv[index].replace('code=', '')];
+			argCodes.push(process.argv[index].replace('code=', ''));
 		} else if (process.argv[index].startsWith('c=')) {
-			return [process.argv[index].replace('c=', '')];
+			argCodes.push(process.argv[index].replace('c=', ''));
 		}
 	}
 	const codeStrs = fs.readFileSync(
 		path.resolve(__dirname, '../.env/favorite.txt')
 	);
 	const codes = codeStrs.toString().replace(/\s/g, '').split(',');
+	for (let index = 0; index < argCodes.length; index++) {
+		codes.push(argCodes[index]);
+	}
 	if (codes.length > 0) {
 		return codes;
 	} else {
