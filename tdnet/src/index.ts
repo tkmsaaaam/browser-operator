@@ -181,8 +181,8 @@ const sortList = (list: Disclosure[]) => {
 	const disclosureList: Disclosure[] = [];
 
 	const start = makeStart();
-	const end = makeEnd();
 	if (start) {
+		const end = makeEnd();
 		for (let i = start; i != end; i--) {
 			await getListFromADay(i, page, disclosureList);
 		}
@@ -194,13 +194,13 @@ const sortList = (list: Disclosure[]) => {
 	const targetCodes = makeTargetCodes();
 	const favoriteList = [];
 	if (targetCodes) {
-		for (let i = 0; i < disclosureList.length; i++) {
-			const e = disclosureList[i];
-			for (let index = 0; index < targetCodes.length; index++) {
-				const targetCode = targetCodes[index];
-				if (e.code == targetCode) {
-					favoriteList.push(e);
-				}
+		for (let index = 0; index < targetCodes.length; index++) {
+			const targetCode = targetCodes[index];
+			const l = disclosureList.filter(
+				disclosure => disclosure.code == targetCode
+			);
+			for (let i = 0; i < l.length; i++) {
+				favoriteList.push(l[i]);
 			}
 		}
 	}
