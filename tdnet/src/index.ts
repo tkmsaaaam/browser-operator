@@ -183,7 +183,7 @@ const sortList = (list: Disclosure[]) => {
 	const start = makeStart();
 	if (start) {
 		const end = makeEnd();
-		for (let i = start; i != end; i--) {
+		for (let i = start; i >= end; i--) {
 			await getListFromADay(i, page, disclosureList);
 		}
 	} else {
