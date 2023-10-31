@@ -89,9 +89,8 @@ const pushDisclosureList = async (page: Page): Promise<Disclosure[]> => {
 		).innerText
 			.replace(/年|月/g, '/')
 			.replace('日', ' ');
-		for (let index = 0; index < data.length; index++) {
-			const row = data[index];
-			const disclosure: Disclosure = {
+		return Array.from(data).map(row => {
+			return {
 				datetime: date + row.getElementsByTagName('td')[0].innerText,
 				code: row.getElementsByTagName('td')[1].innerText,
 				name: row.getElementsByTagName('td')[2].innerText,
@@ -101,9 +100,7 @@ const pushDisclosureList = async (page: Page): Promise<Disclosure[]> => {
 				market: row.getElementsByTagName('td')[5].innerText,
 				update: row.getElementsByTagName('td')[6].innerText,
 			};
-			list.push(disclosure);
-		}
-		return list;
+		});
 	}, []);
 };
 
@@ -131,10 +128,8 @@ const getListFromADay = async (
 				return result_page_size;
 			}, pageSize);
 		}
-		const l = await pushDisclosureList(page);
-		for (let i = 0; i < l.length; i++) {
-			disclosureList.push(l[i]);
-		}
+		const list = await pushDisclosureList(page);
+		list.forEach(e => disclosureList.push(e));
 	}
 };
 
@@ -151,9 +146,7 @@ const makeTargetCodes = (): undefined | string[] => {
 		path.resolve(__dirname, '../.env/favorite.txt')
 	);
 	const codes = codeStrs.toString().replace(/\s/g, '').split(',');
-	for (let index = 0; index < argCodes.length; index++) {
-		codes.push(argCodes[index]);
-	}
+	argCodes.forEach(argCode => codes.push(argCode));
 	if (codes.length > 0) {
 		return codes;
 	} else {
@@ -192,17 +185,13 @@ const sortList = (list: Disclosure[]) => {
 	}
 
 	const targetCodes = makeTargetCodes();
-	const favoriteList = [];
+	const favoriteList: Disclosure[] = [];
 	if (targetCodes) {
-		for (let index = 0; index < targetCodes.length; index++) {
-			const targetCode = targetCodes[index];
-			const l = disclosureList.filter(
-				disclosure => disclosure.code == targetCode
-			);
-			for (let i = 0; i < l.length; i++) {
-				favoriteList.push(l[i]);
-			}
-		}
+		targetCodes.forEach(targetCode =>
+			disclosureList
+				.filter(disclosure => disclosure.code == targetCode)
+				.forEach(e => favoriteList.push(e))
+		);
 	}
 
 	const result: Result = {
