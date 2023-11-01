@@ -22,42 +22,58 @@ const makeStart = (): undefined | number => {
 	const ARG_NAME = 'start';
 	const LONG_ARG_KEY = ARG_NAME + '=';
 	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
-	for (let index = 0; index < process.argv.length; index++) {
-		if (process.argv[index].startsWith(LONG_ARG_KEY)) {
-			return Number(process.argv[index].replace(LONG_ARG_KEY, ''));
-		} else if (process.argv[index].startsWith(SHORT_ARG_KEY)) {
-			return Number(process.argv[index].replace(SHORT_ARG_KEY, ''));
-		}
+
+	const longArgKeyAndValue = process.argv.find(arg =>
+		arg.startsWith(LONG_ARG_KEY)
+	);
+	const shortArgKeyAndValue = process.argv.find(arg =>
+		arg.startsWith(SHORT_ARG_KEY)
+	);
+	if (longArgKeyAndValue) {
+		return Number(longArgKeyAndValue.replace(LONG_ARG_KEY, ''));
+	} else if (shortArgKeyAndValue) {
+		return Number(shortArgKeyAndValue.replace(SHORT_ARG_KEY, ''));
+	} else {
+		return undefined;
 	}
-	return undefined;
 };
 
 const makeEnd = (): number => {
 	const ARG_NAME = 'end';
 	const LONG_ARG_KEY = ARG_NAME + '=';
 	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
-	for (let index = 0; index < process.argv.length; index++) {
-		if (process.argv[index].startsWith(LONG_ARG_KEY)) {
-			return Number(process.argv[index].replace(LONG_ARG_KEY, ''));
-		} else if (process.argv[index].startsWith(SHORT_ARG_KEY)) {
-			return Number(process.argv[index].replace(SHORT_ARG_KEY, ''));
-		}
+	const longArgKeyAndValue = process.argv.find(arg =>
+		arg.startsWith(LONG_ARG_KEY)
+	);
+	const shortArgKeyAndValue = process.argv.find(arg =>
+		arg.startsWith(SHORT_ARG_KEY)
+	);
+	if (longArgKeyAndValue) {
+		return Number(longArgKeyAndValue.replace(LONG_ARG_KEY, ''));
+	} else if (shortArgKeyAndValue) {
+		return Number(shortArgKeyAndValue.replace(SHORT_ARG_KEY, ''));
+	} else {
+		return 0;
 	}
-	return 0;
 };
 
 const makeDateDiff = (): number => {
 	const ARG_NAME = 'diff';
 	const LONG_ARG_KEY = ARG_NAME + '=';
 	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
-	for (let index = 0; index < process.argv.length; index++) {
-		if (process.argv[index].startsWith(LONG_ARG_KEY)) {
-			return Number(process.argv[index].replace(LONG_ARG_KEY, ''));
-		} else if (process.argv[index].startsWith(SHORT_ARG_KEY)) {
-			return Number(process.argv[index].replace(SHORT_ARG_KEY, ''));
-		}
+	const longArgKeyAndValue = process.argv.find(arg =>
+		arg.startsWith(LONG_ARG_KEY)
+	);
+	const shortArgKeyAndValue = process.argv.find(arg =>
+		arg.startsWith(SHORT_ARG_KEY)
+	);
+	if (longArgKeyAndValue) {
+		return Number(longArgKeyAndValue.replace(LONG_ARG_KEY, ''));
+	} else if (shortArgKeyAndValue) {
+		return Number(shortArgKeyAndValue.replace(SHORT_ARG_KEY, ''));
+	} else {
+		return 0;
 	}
-	return 0;
 };
 
 const makeTargetDate = (diff: number): string => {
