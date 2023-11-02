@@ -150,14 +150,16 @@ const getListFromADay = async (
 };
 
 const makeTargetCodes = (): undefined | string[] => {
-	const argCodes = [];
-	for (let index = 0; index < process.argv.length; index++) {
-		if (process.argv[index].startsWith('code=')) {
-			argCodes.push(process.argv[index].replace('code=', ''));
-		} else if (process.argv[index].startsWith('c=')) {
-			argCodes.push(process.argv[index].replace('c=', ''));
-		}
-	}
+	const ARG_NAME = 'code';
+	const LONG_ARG_KEY = ARG_NAME + '=';
+	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
+	const argCodes: string[] = [];
+	process.argv
+		.filter(arg => arg.startsWith(LONG_ARG_KEY))
+		.forEach(arg => argCodes.push(arg.replace(LONG_ARG_KEY, '')));
+	process.argv
+		.filter(arg => arg.startsWith(SHORT_ARG_KEY))
+		.forEach(arg => argCodes.push(arg.replace(SHORT_ARG_KEY, '')));
 	const codeStrs = fs.readFileSync(
 		path.resolve(__dirname, '../.env/favorite.txt')
 	);
