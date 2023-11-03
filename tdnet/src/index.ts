@@ -18,6 +18,32 @@ type Result = {
 	all: Disclosure[];
 };
 
+const getLastDateDiff = (): number => {
+	const file = path.resolve(__dirname, '../.env/lastDate.txt');
+	if (!fs.existsSync(file)) return 30;
+	const lastDateStr = fs.readFileSync(file).toString();
+	const lastDate = Date.parse(lastDateStr);
+	const currentDate = Date.now();
+	return Math.floor((currentDate - lastDate) / 1000 / 60 / 60 / 24);
+};
+
+const makeLastDate = (): number | undefined => {
+	const ARG_NAME = 'last';
+	const LONG_ARG_KEY = ARG_NAME + '=';
+	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
+	const longArgKeyAndValue = process.argv.find(
+		arg => arg == LONG_ARG_KEY + 'true'
+	);
+	const shortArgKeyAndValue = process.argv.find(
+		arg => arg == SHORT_ARG_KEY + 'true'
+	);
+	if (longArgKeyAndValue || shortArgKeyAndValue) {
+		return getLastDateDiff();
+	} else {
+		return undefined;
+	}
+};
+
 const makeStart = (): undefined | number => {
 	const ARG_NAME = 'start';
 	const LONG_ARG_KEY = ARG_NAME + '=';
@@ -149,6 +175,17 @@ const getListFromADay = async (
 	}
 };
 
+const saveLastDate = (end: number) => {
+	const currentDate = new Date();
+
+	const lastDate = new Date(currentDate.setDate(currentDate.getDate() - end));
+	const file = path.resolve(__dirname, '../.env/lastDate.txt');
+	fs.writeFileSync(
+		file,
+		`${lastDate.getFullYear()}/${lastDate.getMonth() + 1}/${lastDate.getDate()}`
+	);
+};
+
 const makeTargetCodes = (): undefined | string[] => {
 	const ARG_NAME = 'code';
 	const LONG_ARG_KEY = ARG_NAME + '=';
@@ -192,14 +229,20 @@ const sortList = (list: Disclosure[]) => {
 	const disclosureList: Disclosure[] = [];
 
 	const start = makeStart();
+	const lastDate = makeLastDate();
+	const end = makeEnd();
 	if (start) {
-		const end = makeEnd();
 		for (let i = start; i >= end; i--) {
 			await getListFromADay(i, page, disclosureList);
 		}
-	} else {
+	} else if (!lastDate) {
 		const dateDiff = makeDateDiff();
 		await getListFromADay(dateDiff, page, disclosureList);
+	} else {
+		for (let i = lastDate; i >= end; i--) {
+			await getListFromADay(i, page, disclosureList);
+		}
+		saveLastDate(end);
 	}
 
 	const targetCodes = makeTargetCodes();
