@@ -2,6 +2,7 @@ import puppeteer, { Page } from 'puppeteer-core';
 import util from 'util';
 import fs from 'fs';
 import path from 'path';
+import { getLastDateDiff, saveLastDate } from './lastdate-repository';
 
 type Disclosure = {
 	datetime: string;
@@ -16,15 +17,6 @@ type Disclosure = {
 type Result = {
 	favorites: Disclosure[];
 	all: Disclosure[];
-};
-
-const getLastDateDiff = (): number => {
-	const file = path.resolve(__dirname, '../.env/lastDate.txt');
-	if (!fs.existsSync(file)) return 30;
-	const lastDateStr = fs.readFileSync(file).toString();
-	const lastDate = Date.parse(lastDateStr);
-	const currentDate = Date.now();
-	return Math.floor((currentDate - lastDate) / 1000 / 60 / 60 / 24);
 };
 
 const makeLastDate = (): number | undefined => {
@@ -175,17 +167,6 @@ const getListFromADay = async (
 	}
 };
 
-const saveLastDate = (end: number) => {
-	const currentDate = new Date();
-
-	const lastDate = new Date(currentDate.setDate(currentDate.getDate() - end));
-	const file = path.resolve(__dirname, '../.env/lastDate.txt');
-	fs.writeFileSync(
-		file,
-		`${lastDate.getFullYear()}/${lastDate.getMonth() + 1}/${lastDate.getDate()}`
-	);
-};
-
 const makeTargetCodes = (): undefined | string[] => {
 	const ARG_NAME = 'code';
 	const LONG_ARG_KEY = ARG_NAME + '=';
@@ -235,14 +216,14 @@ const sortList = (list: Disclosure[]) => {
 		for (let i = start; i >= end; i--) {
 			await getListFromADay(i, page, disclosureList);
 		}
-	} else if (!lastDate) {
-		const dateDiff = makeDateDiff();
-		await getListFromADay(dateDiff, page, disclosureList);
-	} else {
+	} else if (lastDate) {
 		for (let i = lastDate; i >= end; i--) {
 			await getListFromADay(i, page, disclosureList);
 		}
 		saveLastDate(end);
+	} else {
+		const dateDiff = makeDateDiff();
+		await getListFromADay(dateDiff, page, disclosureList);
 	}
 
 	const targetCodes = makeTargetCodes();
