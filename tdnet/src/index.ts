@@ -181,8 +181,29 @@ const makeTargetCodes = (): undefined | string[] => {
 	const codeStrs = fs.readFileSync(
 		path.resolve(__dirname, '../.env/favorite.txt')
 	);
+	const file = path.resolve(__dirname, '../.env/favorite.txt');
+	fs.writeFileSync(
+		file,
+		codeStrs
+			.toString()
+			.replace(/\s/g, '')
+			.split(',')
+			.sort((f, s) => {
+				if (f < s) return -1;
+				if (f > s) return 1;
+				return 0;
+			})
+			.toString()
+	);
+
 	const codes = codeStrs.toString().replace(/\s/g, '').split(',');
-	argCodes.forEach(argCode => codes.push(argCode));
+	argCodes.forEach(argCode => {
+		if (argCode.includes('#')) {
+			codes.push(argCode.slice(0, argCode.indexOf('#')));
+		} else {
+			codes.push(argCode);
+		}
+	});
 	if (codes.length > 0) {
 		return codes;
 	} else {
