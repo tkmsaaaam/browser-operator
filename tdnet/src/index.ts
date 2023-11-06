@@ -178,23 +178,20 @@ const makeTargetCodes = (): undefined | string[] => {
 	process.argv
 		.filter(arg => arg.startsWith(SHORT_ARG_KEY))
 		.forEach(arg => argCodes.push(arg.replace(SHORT_ARG_KEY, '')));
-	const codeStrs = fs.readFileSync(
-		path.resolve(__dirname, '../.env/favorite.txt')
-	);
 	const file = path.resolve(__dirname, '../.env/favorite.txt');
-	fs.writeFileSync(
-		file,
-		codeStrs
-			.toString()
-			.replace(/\s/g, '')
-			.split(',')
-			.sort((f, s) => {
-				if (f < s) return -1;
-				if (f > s) return 1;
-				return 0;
-			})
-			.toString()
-	);
+	let codeStrs = '';
+	fs.readFileSync(file)
+		.toString()
+		.replace(/\s/g, '')
+		.split(',')
+		.sort((f, s) => {
+			if (f < s) return -1;
+			if (f > s) return 1;
+			return 0;
+		})
+		.forEach(code => (codeStrs += code + ',\n'));
+
+	fs.writeFileSync(file, codeStrs);
 
 	const codes = codeStrs.toString().replace(/\s/g, '').split(',');
 	argCodes.forEach(argCode => {
