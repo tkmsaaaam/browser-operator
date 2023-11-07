@@ -180,10 +180,9 @@ const makeTargetCodes = (): undefined | string[] => {
 		.forEach(arg => argCodes.push(arg.replace(SHORT_ARG_KEY, '')));
 	const file = path.resolve(__dirname, '../.env/favorite.txt');
 	let codeStrs = '';
-	fs.readFileSync(file)
-		.toString()
-		.replace(/\s/g, '')
-		.split(',')
+	Array.from(
+		new Set(fs.readFileSync(file).toString().replace(/\s/g, '').split(','))
+	)
 		.sort((f, s) => {
 			if (f < s) return -1;
 			if (f > s) return 1;
