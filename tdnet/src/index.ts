@@ -36,10 +36,9 @@ const makeLastDate = (): number | undefined => {
 	}
 };
 
-const makeStart = (): undefined | number => {
-	const ARG_NAME = 'start';
-	const LONG_ARG_KEY = ARG_NAME + '=';
-	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
+const makeArg = (argName: string): string | undefined => {
+	const LONG_ARG_KEY = argName + '=';
+	const SHORT_ARG_KEY = argName.slice(0, 1) + '=';
 
 	const longArgKeyAndValue = process.argv.find(arg =>
 		arg.startsWith(LONG_ARG_KEY)
@@ -48,9 +47,19 @@ const makeStart = (): undefined | number => {
 		arg.startsWith(SHORT_ARG_KEY)
 	);
 	if (longArgKeyAndValue) {
-		return Number(longArgKeyAndValue.replace(LONG_ARG_KEY, ''));
+		return longArgKeyAndValue.replace(LONG_ARG_KEY, '');
 	} else if (shortArgKeyAndValue) {
-		return Number(shortArgKeyAndValue.replace(SHORT_ARG_KEY, ''));
+		shortArgKeyAndValue.replace(SHORT_ARG_KEY, '');
+	} else {
+		return undefined;
+	}
+};
+
+const makeStart = (): undefined | number => {
+	const ARG_NAME = 'start';
+	const startArg = makeArg(ARG_NAME);
+	if (startArg) {
+		return Number(startArg);
 	} else {
 		return undefined;
 	}
@@ -58,18 +67,9 @@ const makeStart = (): undefined | number => {
 
 const makeEnd = (): number => {
 	const ARG_NAME = 'end';
-	const LONG_ARG_KEY = ARG_NAME + '=';
-	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
-	const longArgKeyAndValue = process.argv.find(arg =>
-		arg.startsWith(LONG_ARG_KEY)
-	);
-	const shortArgKeyAndValue = process.argv.find(arg =>
-		arg.startsWith(SHORT_ARG_KEY)
-	);
-	if (longArgKeyAndValue) {
-		return Number(longArgKeyAndValue.replace(LONG_ARG_KEY, ''));
-	} else if (shortArgKeyAndValue) {
-		return Number(shortArgKeyAndValue.replace(SHORT_ARG_KEY, ''));
+	const endArg = makeArg(ARG_NAME);
+	if (endArg) {
+		return Number(endArg);
 	} else {
 		return 0;
 	}
@@ -77,18 +77,9 @@ const makeEnd = (): number => {
 
 const makeDateDiff = (): number => {
 	const ARG_NAME = 'diff';
-	const LONG_ARG_KEY = ARG_NAME + '=';
-	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
-	const longArgKeyAndValue = process.argv.find(arg =>
-		arg.startsWith(LONG_ARG_KEY)
-	);
-	const shortArgKeyAndValue = process.argv.find(arg =>
-		arg.startsWith(SHORT_ARG_KEY)
-	);
-	if (longArgKeyAndValue) {
-		return Number(longArgKeyAndValue.replace(LONG_ARG_KEY, ''));
-	} else if (shortArgKeyAndValue) {
-		return Number(shortArgKeyAndValue.replace(SHORT_ARG_KEY, ''));
+	const diffArg = makeArg(ARG_NAME);
+	if (diffArg) {
+		return Number(diffArg);
 	} else {
 		return 0;
 	}
