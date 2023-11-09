@@ -11,7 +11,7 @@ export const getLastDateDiff = (): number => {
 	const lastDateStr = fs.readFileSync(file).toString();
 	const lastDate = Date.parse(lastDateStr);
 	const currentDate = Date.now();
-	return Math.floor((currentDate - lastDate) / 1000 / 60 / 60 / 24);
+	return Math.floor((currentDate - lastDate) / 1000 / 60 / 60 / 24) - 1;
 };
 
 export const saveLastDate = (end: number) => {
