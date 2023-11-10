@@ -233,6 +233,7 @@ const sortList = (list: Disclosure[]) => {
 		const dateDiff = makeDateDiff();
 		await getListFromADay(dateDiff, page, disclosureList);
 	}
+  await browser.close();
 
 	const targetCodes = makeTargetCodes();
 	const favoriteList: Disclosure[] = [];
@@ -253,5 +254,4 @@ const sortList = (list: Disclosure[]) => {
 	console.log(
 		'favorites: ' + result.favorites.length + ', all: ' + result.all.length
 	);
-	await browser.close();
 })();
