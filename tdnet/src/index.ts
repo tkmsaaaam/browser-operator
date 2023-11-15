@@ -174,6 +174,7 @@ const makeTargetCodes = (): undefined | string[] => {
 	Array.from(
 		new Set(fs.readFileSync(file).toString().replace(/\s/g, '').split(','))
 	)
+		.filter(code => !(code == ''))
 		.sort((f, s) => {
 			if (f < s) return -1;
 			if (f > s) return 1;
@@ -233,7 +234,7 @@ const sortList = (list: Disclosure[]) => {
 		const dateDiff = makeDateDiff();
 		await getListFromADay(dateDiff, page, disclosureList);
 	}
-  await browser.close();
+	await browser.close();
 
 	const targetCodes = makeTargetCodes();
 	const favoriteList: Disclosure[] = [];
