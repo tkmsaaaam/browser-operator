@@ -19,7 +19,7 @@ type Result = {
 	all: Disclosure[];
 };
 
-const makeLastDate = (): number | undefined => {
+const makeLastDate = () => {
 	const ARG_NAME = 'last';
 	const LONG_ARG_KEY = ARG_NAME + '=';
 	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
@@ -36,7 +36,7 @@ const makeLastDate = (): number | undefined => {
 	}
 };
 
-const makeArg = (argName: string): string | undefined => {
+const makeArg = (argName: string) => {
 	const LONG_ARG_KEY = argName + '=';
 	const SHORT_ARG_KEY = argName.slice(0, 1) + '=';
 
@@ -55,7 +55,7 @@ const makeArg = (argName: string): string | undefined => {
 	}
 };
 
-const makeStart = (): undefined | number => {
+const makeStart = () => {
 	const ARG_NAME = 'start';
 	const startArg = makeArg(ARG_NAME);
 	if (startArg) {
@@ -65,7 +65,7 @@ const makeStart = (): undefined | number => {
 	}
 };
 
-const makeEnd = (): number => {
+const makeEnd = () => {
 	const ARG_NAME = 'end';
 	const endArg = makeArg(ARG_NAME);
 	if (endArg) {
@@ -75,7 +75,7 @@ const makeEnd = (): number => {
 	}
 };
 
-const makeDateDiff = (): number => {
+const makeDateDiff = () => {
 	const ARG_NAME = 'diff';
 	const diffArg = makeArg(ARG_NAME);
 	if (diffArg) {
@@ -85,7 +85,7 @@ const makeDateDiff = (): number => {
 	}
 };
 
-const makeTargetDate = (diff: number): string => {
+const makeTargetDate = (diff: number) => {
 	const currentDate = new Date();
 
 	currentDate.setDate(currentDate.getDate() - diff);
@@ -101,7 +101,7 @@ const makeTargetDate = (diff: number): string => {
 	);
 };
 
-const sleep = (time: number): Promise<void> =>
+const sleep = (time: number) =>
 	new Promise(resolve => setTimeout(resolve, time * 1000));
 
 const pushDisclosureList = async (page: Page): Promise<Disclosure[]> => {
@@ -158,7 +158,7 @@ const getListFromADay = async (
 	}
 };
 
-const makeTargetCodes = (): undefined | string[] => {
+const makeTargetCodes = () => {
 	const ARG_NAME = 'code';
 	const LONG_ARG_KEY = ARG_NAME + '=';
 	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
