@@ -33,14 +33,14 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 	const username = process.env.USERNAME;
 	if (!username) {
 		console.error(
-			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env'
+			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env',
 		);
 		return;
 	}
 	const password = getPassword(username);
 	if (!password) {
 		console.error(
-			'password is not present in KeyChainAccess. Set service: RAKUTEN_SEC, Account: username, Password: password.'
+			'password is not present in KeyChainAccess. Set service: RAKUTEN_SEC, Account: username, Password: password.',
 		);
 		return;
 	}

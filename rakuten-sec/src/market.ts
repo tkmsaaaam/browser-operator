@@ -27,7 +27,7 @@ type Index = {
 
 export const getMarket = async (
 	page: Page,
-	bvSessionId: string
+	bvSessionId: string,
 ): Promise<Market> => {
 	const MARKET_URL = 'https://member.rakuten-sec.co.jp/app/market_top.do;';
 	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
@@ -51,38 +51,38 @@ const makeMarketStrings = async (page: Page): Promise<MarketStrings> => {
 	return await page.evaluate((resultMarcket: MarketStrings) => {
 		resultMarcket.yenPerDollar.current = (
 			document.querySelector(
-				'td[id="auto_update_market_index_exchange_XXX31_ask"]'
+				'td[id="auto_update_market_index_exchange_XXX31_ask"]',
 			) as HTMLTableElement
 		).innerText;
 		resultMarcket.yenPerDollar.diffAmount = (
 			document.querySelector(
-				'td[id="auto_update_market_index_exchange_XXX31_net_change"]'
+				'td[id="auto_update_market_index_exchange_XXX31_net_change"]',
 			) as HTMLTableElement
 		).innerText;
 		resultMarcket.yenPerDollar.diffRate = (
 			document.querySelector(
-				'td[id="auto_update_market_index_exchange_XXX31_bid_percent_change"]'
+				'td[id="auto_update_market_index_exchange_XXX31_bid_percent_change"]',
 			) as HTMLTableElement
 		).innerText;
 		resultMarcket.yenPerDollar.dateTime = (
 			document.querySelector(
-				'td[id="auto_update_market_index_exchange_XXX31_now_date"]'
+				'td[id="auto_update_market_index_exchange_XXX31_now_date"]',
 			) as HTMLTableElement
 		).innerText;
 
 		resultMarcket.bonds10.current = (
 			document.querySelector(
-				'td[id="auto_update_market_index_bond_BD005_annualized_yield"]'
+				'td[id="auto_update_market_index_bond_BD005_annualized_yield"]',
 			) as HTMLTableElement
 		).innerText;
 		resultMarcket.bonds10.diffRate = (
 			document.querySelector(
-				'td[id="auto_update_market_index_bond_BD005_net_change"]'
+				'td[id="auto_update_market_index_bond_BD005_net_change"]',
 			) as HTMLTableElement
 		).innerText;
 		resultMarcket.bonds10.dateTime = (
 			document.querySelector(
-				'td[id="auto_update_market_index_bond_BD005_now_date"]'
+				'td[id="auto_update_market_index_bond_BD005_now_date"]',
 			) as HTMLTableElement
 		).innerText;
 		return resultMarcket;

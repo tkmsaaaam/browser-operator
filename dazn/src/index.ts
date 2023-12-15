@@ -37,7 +37,7 @@ const sleep = (time: number): Promise<void> =>
 		const titles = document.getElementsByTagName('h2');
 		const getTdInnerText = (
 			htmlTableElement: HTMLTableElement,
-			i: number
+			i: number,
 		): string => {
 			return htmlTableElement.getElementsByTagName('td')[i].innerText;
 		};
@@ -46,7 +46,7 @@ const sleep = (time: number): Promise<void> =>
 			const makeEvent = (
 				category: string,
 				table: HTMLTableElement,
-				j: number
+				j: number,
 			): Event => {
 				const event: Event = {
 					category: category,
@@ -92,15 +92,15 @@ const sleep = (time: number): Promise<void> =>
 	for (const raceEvent of raceEvents) {
 		const month = raceEvent.DateTimeStr.slice(
 			0,
-			raceEvent.DateTimeStr.indexOf('月')
+			raceEvent.DateTimeStr.indexOf('月'),
 		).padStart(2, '0');
 		const date = raceEvent.DateTimeStr.slice(
 			raceEvent.DateTimeStr.indexOf('月') + 1,
-			raceEvent.DateTimeStr.indexOf('日')
+			raceEvent.DateTimeStr.indexOf('日'),
 		).padStart(2, '0');
 		const startTime = raceEvent.DateTimeStr.slice(
 			raceEvent.DateTimeStr.indexOf('）') + 1,
-			raceEvent.DateTimeStr.indexOf('）') + 6
+			raceEvent.DateTimeStr.indexOf('）') + 6,
 		)
 			.replace(':', '')
 			.padStart(4, '0');

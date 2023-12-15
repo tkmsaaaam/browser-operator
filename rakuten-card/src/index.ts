@@ -18,13 +18,13 @@ const INTERVAL = 10;
 
 const clickLatestPdfUrl = async (page: Page): Promise<void> => {
 	await page.click(
-		'a[href="/e-navi/members/statement/download-list.xhtml?downloadAsPdf=0"]'
+		'a[href="/e-navi/members/statement/download-list.xhtml?downloadAsPdf=0"]',
 	);
 };
 
 const clickLatestCsvUrl = async (page: Page): Promise<void> => {
 	await page.click(
-		'a[href="/e-navi/members/statement/index.xhtml?downloadAsCsv=1"]'
+		'a[href="/e-navi/members/statement/index.xhtml?downloadAsCsv=1"]',
 	);
 };
 
@@ -32,7 +32,7 @@ const getCardCount = async (page: Page) => {
 	return await page.evaluate(() => {
 		return (
 			document.querySelector(
-				'select[id="cardChangeForm:cardtype"]'
+				'select[id="cardChangeForm:cardtype"]',
 			) as HTMLSelectElement
 		).options.length;
 	});
@@ -42,14 +42,14 @@ const getCardCount = async (page: Page) => {
 	const username = process.env.EMAIL;
 	if (!username) {
 		console.error(
-			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env'
+			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env',
 		);
 		return;
 	}
 	const password = getPassword(username);
 	if (!password) {
 		console.error(
-			'password is not present in KeyChainAccess. Set service: RAKUTEN_CARD, Account: username, Password: password.'
+			'password is not present in KeyChainAccess. Set service: RAKUTEN_CARD, Account: username, Password: password.',
 		);
 		return;
 	}
@@ -73,7 +73,7 @@ const getCardCount = async (page: Page) => {
 			await page.evaluate(index => {
 				(
 					document.querySelector(
-						'select[id="cardChangeForm:cardtype"]'
+						'select[id="cardChangeForm:cardtype"]',
 					) as HTMLSelectElement
 				).selectedIndex = index;
 				(document.getElementById('cardChangeForm') as HTMLFormElement).submit();

@@ -50,14 +50,14 @@ type PossessStrings = {
 
 export const getAsset = async (
 	page: Page,
-	bvSessionId: string
+	bvSessionId: string,
 ): Promise<Asset> => {
 	const ALL_ASSET_LIST_URL =
 		'https://member.rakuten-sec.co.jp/app/ass_all_possess_lst.do;';
 	await page.goto(
 		ALL_ASSET_LIST_URL +
 			bvSessionId +
-			'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn='
+			'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn=',
 	);
 
 	await sleep(3);
@@ -73,7 +73,7 @@ const makeAssetStrings = async (page: Page): Promise<AssetStrings> => {
 	return await page.evaluate((asset: AssetStrings) => {
 		asset.total.amount = (
 			document.querySelector(
-				'td[class="R1 B3 f105p"] span[class="fb"]'
+				'td[class="R1 B3 f105p"] span[class="fb"]',
 			) as HTMLSpanElement
 		).innerText;
 
@@ -138,7 +138,7 @@ const makeTotal = (totalStrings: TotalStrings): Total => {
 
 const makePossess = (possessStrings: PossessStrings): Possess => {
 	const currentPrice = Number(
-		possessStrings.currentPrice.replace(/円\/USD|円|USD|,/g, '')
+		possessStrings.currentPrice.replace(/円\/USD|円|USD|,/g, ''),
 	);
 	const diff = Number(possessStrings.diff.replace(/円|USD|円\/USD|,/g, ''));
 	const profit = Number(possessStrings.profit.replace(/円|,|\n|\t/g, ''));
