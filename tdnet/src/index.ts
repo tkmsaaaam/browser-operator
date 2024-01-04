@@ -24,10 +24,10 @@ const makeLastDate = () => {
 	const LONG_ARG_KEY = ARG_NAME + '=';
 	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
 	const longArgKeyAndValue = process.argv.find(
-		arg => arg == LONG_ARG_KEY + 'true'
+		arg => arg == LONG_ARG_KEY + 'true',
 	);
 	const shortArgKeyAndValue = process.argv.find(
-		arg => arg == SHORT_ARG_KEY + 'true'
+		arg => arg == SHORT_ARG_KEY + 'true',
 	);
 	if (longArgKeyAndValue || shortArgKeyAndValue) {
 		return getLastDateDiff();
@@ -41,10 +41,10 @@ const makeArg = (argName: string) => {
 	const SHORT_ARG_KEY = argName.slice(0, 1) + '=';
 
 	const longArgKeyAndValue = process.argv.find(arg =>
-		arg.startsWith(LONG_ARG_KEY)
+		arg.startsWith(LONG_ARG_KEY),
 	);
 	const shortArgKeyAndValue = process.argv.find(arg =>
-		arg.startsWith(SHORT_ARG_KEY)
+		arg.startsWith(SHORT_ARG_KEY),
 	);
 	if (longArgKeyAndValue) {
 		return longArgKeyAndValue.replace(LONG_ARG_KEY, '');
@@ -136,7 +136,7 @@ const makePath = (i: number, dateStr: string) => {
 const getListFromADay = async (
 	dateDiff: number,
 	page: Page,
-	disclosureList: Disclosure[]
+	disclosureList: Disclosure[],
 ) => {
 	const BASE_URL = 'https://www.release.tdnet.info/inbs/';
 	const targetDateStr = makeTargetDate(dateDiff);
@@ -172,7 +172,7 @@ const makeTargetCodes = () => {
 	const file = path.resolve(__dirname, '../.env/favorite.txt');
 	let codeStrs = '';
 	Array.from(
-		new Set(fs.readFileSync(file).toString().replace(/\s/g, '').split(','))
+		new Set(fs.readFileSync(file).toString().replace(/\s/g, '').split(',')),
 	)
 		.filter(code => !(code == ''))
 		.sort((f, s) => {
@@ -242,7 +242,7 @@ const sortList = (list: Disclosure[]) => {
 		targetCodes.forEach(targetCode =>
 			disclosureList
 				.filter(disclosure => disclosure.code == targetCode)
-				.forEach(e => favoriteList.push(e))
+				.forEach(e => favoriteList.push(e)),
 		);
 	}
 
@@ -251,8 +251,16 @@ const sortList = (list: Disclosure[]) => {
 		all: sortList(disclosureList),
 	};
 
+	if (process.env.FILE_OUTPUT == 'true') {
+		fs.writeFile('./output.txt', JSON.stringify(result, null, 2), err => {
+			if (err) {
+				console.log(err);
+			}
+		});
+	}
+
 	console.log(util.inspect(result, { maxArrayLength: null }));
 	console.log(
-		'favorites: ' + result.favorites.length + ', all: ' + result.all.length
+		'favorites: ' + result.favorites.length + ', all: ' + result.all.length,
 	);
 })();

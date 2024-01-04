@@ -21,6 +21,8 @@ export const saveLastDate = (end: number) => {
 	const file = path.resolve(__dirname, '../.env/lastDate.txt');
 	fs.writeFileSync(
 		file,
-		`${lastDate.getFullYear()}/${lastDate.getMonth() + 1}/${lastDate.getDate()}`
+		`${lastDate.getFullYear()}/${
+			lastDate.getMonth() + 1
+		}/${lastDate.getDate()}`,
 	);
 };

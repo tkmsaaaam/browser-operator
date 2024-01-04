@@ -5,6 +5,7 @@ import { Market, getMarket } from './market';
 import { Favorite, getFavoriteList } from './favorite';
 import * as dotenv from 'dotenv';
 dotenv.config();
+import fs from 'fs';
 
 type Result = {
 	market: Market;
@@ -90,6 +91,13 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 		favoriteList: favoriteList,
 	};
 
+	if (process.env.FILE_OUTPUT == 'true') {
+		fs.writeFile('./output.txt', JSON.stringify(result, null, 2), err => {
+			if (err) {
+				console.log(err);
+			}
+		});
+	}
 	console.log('%o', result);
 	await browser.close();
 })();
