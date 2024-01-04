@@ -1,4 +1,4 @@
-import puppeteer, { Page } from 'puppeteer-core';
+import puppeteer, { Browser, Page } from 'puppeteer-core';
 import { getPassword } from './authentication';
 import { Asset, getAsset } from './asset';
 import { Market, getMarket } from './market';
@@ -44,10 +44,22 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 		);
 		return;
 	}
-	const browser = await puppeteer.launch({
-		channel: 'chrome',
-		headless: true,
-	});
+	const executablePath = process.env.EXECUTABLE_PATH;
+	let browser: Browser;
+	if (executablePath) {
+		browser = await puppeteer.launch({
+			channel: 'chrome',
+			headless: true,
+			args: ['--no-sandbox', '--disable-setuid-sandbox'],
+			executablePath: executablePath,
+		});
+	} else {
+		browser = await puppeteer.launch({
+			channel: 'chrome',
+			headless: true,
+		});
+	}
+
 	const page = await browser.newPage();
 	await page.goto(LOGIN_URL);
 	await page.type('input[id="form-login-id"]', username);
