@@ -1,4 +1,4 @@
-import puppeteer, { Page } from 'puppeteer-core';
+import puppeteer, { Browser, Page } from 'puppeteer-core';
 import util from 'util';
 import fs from 'fs';
 import path from 'path';
@@ -210,10 +210,21 @@ const sortList = (list: Disclosure[]) => {
 };
 
 (async () => {
-	const browser = await puppeteer.launch({
-		channel: 'chrome',
-		headless: true,
-	});
+	const executablePath = process.env.EXECUTABLE_PATH;
+	let browser: Browser;
+	if (executablePath) {
+		browser = await puppeteer.launch({
+			channel: 'chrome',
+			headless: true,
+			args: ['--no-sandbox', '--disable-setuid-sandbox'],
+			executablePath: executablePath,
+		});
+	} else {
+		browser = await puppeteer.launch({
+			channel: 'chrome',
+			headless: true,
+		});
+	}
 	const page = await browser.newPage();
 
 	const disclosureList: Disclosure[] = [];
