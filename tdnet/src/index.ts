@@ -169,11 +169,17 @@ const makeTargetCodes = () => {
 	process.argv
 		.filter(arg => arg.startsWith(SHORT_ARG_KEY))
 		.forEach(arg => argCodes.push(arg.replace(SHORT_ARG_KEY, '')));
-  const filePath = '../.env/favorite.txt';
+	const favoritesFilePath = process.env.FAVORITES_FILE_PATH;
+	let filePath;
+	if (favoritesFilePath) {
+		filePath = favoritesFilePath;
+	} else {
+		filePath = '../.env/favorite.txt';
+	}
 	if (!fs.existsSync(filePath)) {
 		return undefined;
 	}
-  const file = path.resolve(__dirname, filePath);
+	const file = path.resolve(__dirname, filePath);
 	let codeStrs = '';
 	Array.from(
 		new Set(fs.readFileSync(file).toString().replace(/\s/g, '').split(',')),
