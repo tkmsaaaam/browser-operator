@@ -180,7 +180,8 @@ const makeTargetCodes = () => {
 		return undefined;
 	}
 	const file = path.resolve(__dirname, filePath);
-	let codeStrs = '';
+	const codes: string[] = [];
+	let newFavorites = '';
 	Array.from(
 		new Set(fs.readFileSync(file).toString().replace(/\s/g, '').split(',')),
 	)
@@ -190,18 +191,22 @@ const makeTargetCodes = () => {
 			if (f > s) return 1;
 			return 0;
 		})
-		.forEach(code => (codeStrs += code + ',\n'));
+		.forEach(argCode => {
+			if (argCode.includes('#')) {
+				codes.push(argCode.slice(0, argCode.indexOf('#')));
+			} else {
+				codes.push(argCode);
+			}
+			newFavorites += argCode + ',\n';
+		});
 
-	fs.writeFileSync(file, codeStrs);
-
-	const codes = codeStrs.toString().replace(/\s/g, '').split(',');
 	argCodes.forEach(argCode => {
-		if (argCode.includes('#')) {
-			codes.push(argCode.slice(0, argCode.indexOf('#')));
-		} else {
-			codes.push(argCode);
-		}
+		codes.push(argCode);
+		newFavorites += argCode + ',\n';
 	});
+
+	fs.writeFileSync(file, newFavorites);
+
 	if (codes.length > 0) {
 		return codes;
 	} else {
