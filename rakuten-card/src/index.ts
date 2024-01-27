@@ -2,6 +2,7 @@ import puppeteer, { Page } from 'puppeteer-core';
 import * as dotenv from 'dotenv';
 dotenv.config();
 import { getPassword } from './authentication';
+import { mkdirSync } from 'fs';
 
 const LOGIN_URL = 'https://www.rakuten-card.co.jp/e-navi/index.xhtml';
 const TOP_URL = 'https://www.rakuten-card.co.jp/e-navi/members/index.xhtml';
@@ -16,13 +17,22 @@ const sleep = (time: number): Promise<void> =>
 
 const INTERVAL = 10;
 
-const clickLatestPdfUrl = async (page: Page): Promise<void> => {
+const clickLatestPdfUrl = async (page: Page, dir: string): Promise<void> => {
+	const client = await page.target().createCDPSession();
+	client.send('Page.setDownloadBehavior', {
+		behavior: 'allow',
+		downloadPath: dir,
+	});
 	await page.click(
 		'a[href="/e-navi/members/statement/download-list.xhtml?downloadAsPdf=0"]',
 	);
 };
-
-const clickLatestCsvUrl = async (page: Page): Promise<void> => {
+const clickLatestCsvUrl = async (page: Page, dir: string): Promise<void> => {
+	const client = await page.target().createCDPSession();
+	client.send('Page.setDownloadBehavior', {
+		behavior: 'allow',
+		downloadPath: dir,
+	});
 	await page.click(
 		'a[href="/e-navi/members/statement/index.xhtml?downloadAsCsv=1"]',
 	);
@@ -55,7 +65,7 @@ const getCardCount = async (page: Page) => {
 	}
 	const browser = await puppeteer.launch({
 		channel: 'chrome',
-		headless: false,
+		headless: true,
 	});
 	const page = await browser.newPage();
 	await page.goto(LOGIN_URL);
@@ -66,6 +76,17 @@ const getCardCount = async (page: Page) => {
 	await page.goto(TOP_URL);
 	await sleep(INTERVAL);
 	const cardCount = await getCardCount(page);
+	let baseDir;
+	const envDir = process.env.BASE_DIR;
+	if (envDir) {
+		if (envDir.endsWith('/')) {
+			baseDir = envDir;
+		} else {
+			baseDir = envDir + '/';
+		}
+	} else {
+		baseDir = './';
+	}
 	for (let index = 0; index < cardCount; index++) {
 		if (index != 0) {
 			await page.goto(TOP_URL);
@@ -83,12 +104,14 @@ const getCardCount = async (page: Page) => {
 
 		await page.goto(DOWNLOAD_LIST_URL);
 		await sleep(INTERVAL);
-		await clickLatestPdfUrl(page);
+		const dir = baseDir + 'rakuten-card-' + index.toString();
+		mkdirSync(dir);
+		await clickLatestPdfUrl(page, dir);
 		await sleep(INTERVAL);
 
 		await page.goto(DOWNLOAD_CSV_URL);
 		await sleep(INTERVAL);
-		await clickLatestCsvUrl(page);
+		await clickLatestCsvUrl(page, dir);
 		await sleep(INTERVAL);
 	}
 	await sleep(INTERVAL);
