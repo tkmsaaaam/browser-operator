@@ -2,7 +2,7 @@ import puppeteer, { Page } from 'puppeteer-core';
 import * as dotenv from 'dotenv';
 dotenv.config();
 import { getPassword } from './authentication';
-import { mkdirSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 
 const LOGIN_URL = 'https://www.rakuten-card.co.jp/e-navi/index.xhtml';
 const TOP_URL = 'https://www.rakuten-card.co.jp/e-navi/members/index.xhtml';
@@ -78,7 +78,7 @@ const getCardCount = async (page: Page) => {
 	const cardCount = await getCardCount(page);
 	let baseDir;
 	const envDir = process.env.BASE_DIR;
-	if (envDir) {
+	if (envDir && existsSync(envDir)) {
 		if (envDir.endsWith('/')) {
 			baseDir = envDir;
 		} else {
