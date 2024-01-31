@@ -18,24 +18,28 @@ const sleep = (time: number): Promise<void> =>
 const INTERVAL = 10;
 
 const clickLatestPdfUrl = async (page: Page, dir: string): Promise<void> => {
-	const client = await page.target().createCDPSession();
-	client.send('Page.setDownloadBehavior', {
-		behavior: 'allow',
-		downloadPath: dir,
-	});
-	await page.click(
+	await downloadFile(
+		page,
+		dir,
 		'a[href="/e-navi/members/statement/download-list.xhtml?downloadAsPdf=0"]',
 	);
 };
+
 const clickLatestCsvUrl = async (page: Page, dir: string): Promise<void> => {
+	await downloadFile(
+		page,
+		dir,
+		'a[href="/e-navi/members/statement/index.xhtml?downloadAsCsv=1"]',
+	);
+};
+
+const downloadFile = async (page: Page, dir: string, element: string) => {
 	const client = await page.target().createCDPSession();
 	client.send('Page.setDownloadBehavior', {
 		behavior: 'allow',
 		downloadPath: dir,
 	});
-	await page.click(
-		'a[href="/e-navi/members/statement/index.xhtml?downloadAsCsv=1"]',
-	);
+	await page.click(element);
 };
 
 const getCardCount = async (page: Page) => {
@@ -46,6 +50,19 @@ const getCardCount = async (page: Page) => {
 			) as HTMLSelectElement
 		).options.length;
 	});
+};
+
+const makeBaseDir = (): string => {
+	const envDir = process.env.BASE_DIR;
+	if (envDir && existsSync(envDir)) {
+		if (envDir.endsWith('/')) {
+			return envDir;
+		} else {
+			return envDir + '/';
+		}
+	} else {
+		return './';
+	}
 };
 
 (async (): Promise<void> => {
@@ -75,18 +92,10 @@ const getCardCount = async (page: Page) => {
 	await sleep(INTERVAL);
 	await page.goto(TOP_URL);
 	await sleep(INTERVAL);
+
 	const cardCount = await getCardCount(page);
-	let baseDir;
-	const envDir = process.env.BASE_DIR;
-	if (envDir && existsSync(envDir)) {
-		if (envDir.endsWith('/')) {
-			baseDir = envDir;
-		} else {
-			baseDir = envDir + '/';
-		}
-	} else {
-		baseDir = './';
-	}
+	const baseDir = makeBaseDir();
+
 	for (let index = 0; index < cardCount; index++) {
 		if (index != 0) {
 			await page.goto(TOP_URL);
