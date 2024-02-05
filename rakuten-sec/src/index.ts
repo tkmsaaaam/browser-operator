@@ -13,15 +13,12 @@ type Result = {
 	favoriteList: Favorite[];
 };
 
-const LOGIN_URL = 'https://www.rakuten-sec.co.jp/';
-
-export const INTERVAL = 1;
-
 export const sleep = (time: number): Promise<void> =>
 	new Promise(resolve => setTimeout(resolve, time * 1000));
 
 const getBvSessionId = async (page: Page): Promise<string> => {
 	for (let index = 0; index < 10; index++) {
+		const INTERVAL = 1;
 		await sleep(INTERVAL);
 		if (page.url().includes('BV_SessionID=')) {
 			return page.url().split(';')[1].split('?')[0];
@@ -62,6 +59,7 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 	}
 
 	const page = await browser.newPage();
+	const LOGIN_URL = 'https://www.rakuten-sec.co.jp/';
 	await page.goto(LOGIN_URL);
 	await page.type('input[id="form-login-id"]', username);
 	await page.type('input[id="form-login-pass"]', password);
