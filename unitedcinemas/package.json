@@ -1,0 +1,36 @@
+{
+  "name": "unitedcinemas",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run lint && tsc && node lib/index.js $npm_config_gp_name",
+    "lint": "eslint src/**/*.ts && prettier --write 'src/**/*.ts'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tkmsaaaam/browser-operator.git"
+  },
+  "author": "tkmsaaaam",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tkmsaaaam/browser-operator/issues"
+  },
+  "homepage": "https://github.com/tkmsaaaam/browser-operator#readme",
+  "devDependencies": {
+    "@types/jsdom": "^21.1.6",
+    "@types/node": "^20.11.13",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-standard": "^17.1.0",
+    "jsdom": "^24.0.0",
+    "prettier": "^3.1.1",
+    "puppeteer": "^22.1.0",
+    "puppeteer-core": "^22.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
