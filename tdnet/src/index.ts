@@ -1,17 +1,17 @@
-import puppeteer, { Browser, Page } from 'puppeteer-core';
 import util from 'util';
 import fs from 'fs';
 import path from 'path';
 import { getLastDateDiff, saveLastDate } from './lastdate-repository';
+import { JSDOM } from 'jsdom';
 
 type Disclosure = {
 	datetime: string;
-	code: string;
-	name: string;
-	title: string;
-	url: string;
-	market: string;
-	update: string;
+	code: string | null;
+	name: string | null;
+	title: string | null;
+	url: string | null;
+	market: string | null;
+	update: string | null;
 };
 
 type Result = {
@@ -101,32 +101,29 @@ const makeTargetDate = (diff: number) => {
 	);
 };
 
-const sleep = (time: number) =>
-	new Promise(resolve => setTimeout(resolve, time * 1000));
+const pushDisclosureList = (doc: Document): Disclosure[] => {
+	const list: Disclosure[] = [];
+	const table = doc.getElementById('main-list-table');
+	if (!table) return list;
+	const data = table.getElementsByTagName('tr');
 
-const pushDisclosureList = async (page: Page): Promise<Disclosure[]> => {
-	return await page.evaluate((list: Disclosure[]): Disclosure[] => {
-		const table = document.getElementById('main-list-table');
-		if (!table) return list;
-		const data = table.getElementsByTagName('tr');
-		const date = (
-			document.getElementById('kaiji-date-1') as HTMLDivElement
-		).innerText
-			.replace(/年|月/g, '/')
-			.replace('日', ' ');
-		return Array.from(data).map(row => {
-			return {
-				datetime: date + row.getElementsByTagName('td')[0].innerText,
-				code: row.getElementsByTagName('td')[1].innerText,
-				name: row.getElementsByTagName('td')[2].innerText,
-				title: row.getElementsByTagName('td')[3].innerText,
-				url: row.getElementsByTagName('td')[3].getElementsByTagName('a')[0]
-					.href,
-				market: row.getElementsByTagName('td')[5].innerText,
-				update: row.getElementsByTagName('td')[6].innerText,
-			};
-		});
-	}, []);
+	const dateStr = (doc.getElementById('kaiji-date-1') as HTMLDivElement)
+		.textContent;
+
+	if (!dateStr) return list;
+
+	const date = dateStr.replace(/年|月/g, '/').replace('日', ' ');
+	return Array.from(data).map(row => {
+		return {
+			datetime: date + row.getElementsByTagName('td')[0].textContent,
+			code: row.getElementsByTagName('td')[1].textContent,
+			name: row.getElementsByTagName('td')[2].textContent,
+			title: row.getElementsByTagName('td')[3].textContent,
+			url: row.getElementsByTagName('td')[3].getElementsByTagName('a')[0].href,
+			market: row.getElementsByTagName('td')[5].textContent,
+			update: row.getElementsByTagName('td')[6].textContent,
+		};
+	});
 };
 
 const makePath = (i: number, dateStr: string) => {
@@ -135,7 +132,6 @@ const makePath = (i: number, dateStr: string) => {
 
 const getListFromADay = async (
 	dateDiff: number,
-	page: Page,
 	disclosureList: Disclosure[],
 ) => {
 	const BASE_URL = 'https://www.release.tdnet.info/inbs/';
@@ -144,16 +140,18 @@ const getListFromADay = async (
 
 	for (let index = 1; index < pageSize + 2; index++) {
 		const p = makePath(index, targetDateStr);
-		await page.goto(BASE_URL + p);
-		await sleep(3);
+
+		const res = await fetch(BASE_URL + p);
+		const buf = await res.arrayBuffer();
+		const strhtml = new TextDecoder('UTF-8').decode(buf);
+
+		const jsdom = new JSDOM();
+		const parser = new jsdom.window.DOMParser();
+		const doc = parser.parseFromString(strhtml, 'text/html');
 		if (index == 1) {
-			pageSize = await page.evaluate((result_page_size: number): number => {
-				result_page_size =
-					document.getElementsByClassName('pager-M').length / 2;
-				return result_page_size;
-			}, pageSize);
+			pageSize = doc.getElementsByClassName('pager-M').length / 2;
 		}
-		const list = await pushDisclosureList(page);
+		const list = pushDisclosureList(doc);
 		list.forEach(e => disclosureList.push(e));
 	}
 };
@@ -218,30 +216,13 @@ const sortList = (list: Disclosure[]) => {
 	return list.sort((f, s) => {
 		if (f.datetime < s.datetime) return -1;
 		if (f.datetime > s.datetime) return 1;
-		if (f.code < s.code) return -1;
-		if (f.code > s.code) return 1;
+		if (f.code && s.code && f.code < s.code) return -1;
+		if (f.code && s.code && f.code > s.code) return 1;
 		return 0;
 	});
 };
 
 (async () => {
-	const executablePath = process.env.EXECUTABLE_PATH;
-	let browser: Browser;
-	if (executablePath) {
-		browser = await puppeteer.launch({
-			channel: 'chrome',
-			headless: true,
-			args: ['--no-sandbox', '--disable-setuid-sandbox'],
-			executablePath: executablePath,
-		});
-	} else {
-		browser = await puppeteer.launch({
-			channel: 'chrome',
-			headless: true,
-		});
-	}
-	const page = await browser.newPage();
-
 	const disclosureList: Disclosure[] = [];
 
 	const start = makeStart();
@@ -249,18 +230,17 @@ const sortList = (list: Disclosure[]) => {
 	const end = makeEnd();
 	if (start) {
 		for (let i = start; i >= end; i--) {
-			await getListFromADay(i, page, disclosureList);
+			await getListFromADay(i, disclosureList);
 		}
 	} else if (lastDate) {
 		for (let i = lastDate; i >= end; i--) {
-			await getListFromADay(i, page, disclosureList);
+			await getListFromADay(i, disclosureList);
 		}
 		saveLastDate(end);
 	} else {
 		const dateDiff = makeDateDiff();
-		await getListFromADay(dateDiff, page, disclosureList);
+		await getListFromADay(dateDiff, disclosureList);
 	}
-	await browser.close();
 
 	const targetCodes = makeTargetCodes();
 	const favoriteList: Disclosure[] = [];
