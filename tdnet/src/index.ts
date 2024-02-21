@@ -6,12 +6,12 @@ import { JSDOM } from 'jsdom';
 
 type Disclosure = {
 	datetime: string;
-	code: string | null;
-	name: string | null;
-	title: string | null;
-	url: string | null;
-	market: string | null;
-	update: string | null;
+	code: string | undefined;
+	name: string | undefined;
+	title: string | undefined;
+	url: string;
+	market: string | undefined;
+	update: string | undefined;
 };
 
 type Result = {
@@ -101,27 +101,30 @@ const makeTargetDate = (diff: number) => {
 	);
 };
 
+const BASE_URL = 'https://www.release.tdnet.info/inbs/';
+
 const pushDisclosureList = (doc: Document): Disclosure[] => {
-	const list: Disclosure[] = [];
 	const table = doc.getElementById('main-list-table');
-	if (!table) return list;
+	if (!table) return [];
 	const data = table.getElementsByTagName('tr');
 
 	const dateStr = (doc.getElementById('kaiji-date-1') as HTMLDivElement)
 		.textContent;
 
-	if (!dateStr) return list;
+	if (!dateStr) return [];
 
 	const date = dateStr.replace(/年|月/g, '/').replace('日', ' ');
 	return Array.from(data).map(row => {
 		return {
-			datetime: date + row.getElementsByTagName('td')[0].textContent,
-			code: row.getElementsByTagName('td')[1].textContent,
-			name: row.getElementsByTagName('td')[2].textContent,
-			title: row.getElementsByTagName('td')[3].textContent,
-			url: row.getElementsByTagName('td')[3].getElementsByTagName('a')[0].href,
-			market: row.getElementsByTagName('td')[5].textContent,
-			update: row.getElementsByTagName('td')[6].textContent,
+			datetime: date + row.getElementsByTagName('td')[0].textContent?.trim(),
+			code: row.getElementsByTagName('td')[1].textContent?.trim(),
+			name: row.getElementsByTagName('td')[2].textContent?.trim(),
+			title: row.getElementsByTagName('td')[3].textContent?.trim(),
+			url:
+				BASE_URL +
+				row.getElementsByTagName('td')[3].getElementsByTagName('a')[0].href,
+			market: row.getElementsByTagName('td')[5].textContent?.trim(),
+			update: row.getElementsByTagName('td')[6].textContent?.trim(),
 		};
 	});
 };
@@ -130,13 +133,10 @@ const makePath = (i: number, dateStr: string) => {
 	return 'I_list_' + i.toString().padStart(3, '0') + '_' + dateStr + '.html';
 };
 
-const getListFromADay = async (
-	dateDiff: number,
-	disclosureList: Disclosure[],
-) => {
-	const BASE_URL = 'https://www.release.tdnet.info/inbs/';
+const getListFromADay = async (dateDiff: number): Promise<Disclosure[]> => {
 	const targetDateStr = makeTargetDate(dateDiff);
 	let pageSize = 0;
+	const list: Disclosure[] = [];
 
 	for (let index = 1; index < pageSize + 2; index++) {
 		const p = makePath(index, targetDateStr);
@@ -151,9 +151,9 @@ const getListFromADay = async (
 		if (index == 1) {
 			pageSize = doc.getElementsByClassName('pager-M').length / 2;
 		}
-		const list = pushDisclosureList(doc);
-		list.forEach(e => disclosureList.push(e));
+		pushDisclosureList(doc).forEach(e => list.push(e));
 	}
+	return list;
 };
 
 const makeTargetCodes = () => {
@@ -230,16 +230,19 @@ const sortList = (list: Disclosure[]) => {
 	const end = makeEnd();
 	if (start) {
 		for (let i = start; i >= end; i--) {
-			await getListFromADay(i, disclosureList);
+			const list = await getListFromADay(i);
+			list.forEach(e => disclosureList.push(e));
 		}
 	} else if (lastDate) {
 		for (let i = lastDate; i >= end; i--) {
-			await getListFromADay(i, disclosureList);
+			const list = await getListFromADay(i);
+			list.forEach(e => disclosureList.push(e));
 		}
 		saveLastDate(end);
 	} else {
 		const dateDiff = makeDateDiff();
-		await getListFromADay(dateDiff, disclosureList);
+		const list = await getListFromADay(dateDiff);
+		list.forEach(e => disclosureList.push(e));
 	}
 
 	const targetCodes = makeTargetCodes();
