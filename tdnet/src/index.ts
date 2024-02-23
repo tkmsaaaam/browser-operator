@@ -103,7 +103,7 @@ const makeTargetDate = (diff: number) => {
 
 const BASE_URL = 'https://www.release.tdnet.info/inbs/';
 
-const pushDisclosureList = (doc: Document): Disclosure[] => {
+const convertFromDocToList = (doc: Document): Disclosure[] => {
 	const table = doc.getElementById('main-list-table');
 	if (!table) return [];
 	const data = table.getElementsByTagName('tr');
@@ -142,8 +142,7 @@ const getListFromADay = async (dateDiff: number): Promise<Disclosure[]> => {
 		const p = makePath(index, targetDateStr);
 
 		const res = await fetch(BASE_URL + p);
-		const buf = await res.arrayBuffer();
-		const strhtml = new TextDecoder('UTF-8').decode(buf);
+		const strhtml = await res.text();
 
 		const jsdom = new JSDOM();
 		const parser = new jsdom.window.DOMParser();
@@ -151,7 +150,7 @@ const getListFromADay = async (dateDiff: number): Promise<Disclosure[]> => {
 		if (index == 1) {
 			pageSize = doc.getElementsByClassName('pager-M').length / 2;
 		}
-		pushDisclosureList(doc).forEach(e => list.push(e));
+		convertFromDocToList(doc).forEach(e => list.push(e));
 	}
 	return list;
 };
