@@ -36,7 +36,7 @@ const makeLastDate = () => {
 	}
 };
 
-const makeArg = (argName: string) => {
+export const makeArg = (argName: string) => {
 	const LONG_ARG_KEY = argName + '=';
 	const SHORT_ARG_KEY = argName.slice(0, 1) + '=';
 
@@ -49,13 +49,13 @@ const makeArg = (argName: string) => {
 	if (longArgKeyAndValue) {
 		return longArgKeyAndValue.replace(LONG_ARG_KEY, '');
 	} else if (shortArgKeyAndValue) {
-		shortArgKeyAndValue.replace(SHORT_ARG_KEY, '');
+		return shortArgKeyAndValue.replace(SHORT_ARG_KEY, '');
 	} else {
 		return undefined;
 	}
 };
 
-const makeStart = () => {
+export const makeStart = () => {
 	const ARG_NAME = 'start';
 	const startArg = makeArg(ARG_NAME);
 	if (startArg) {
@@ -65,7 +65,7 @@ const makeStart = () => {
 	}
 };
 
-const makeEnd = () => {
+export const makeEnd = () => {
 	const ARG_NAME = 'end';
 	const endArg = makeArg(ARG_NAME);
 	if (endArg) {
@@ -75,7 +75,7 @@ const makeEnd = () => {
 	}
 };
 
-const makeDateDiff = () => {
+export const makeDateDiff = () => {
 	const ARG_NAME = 'diff';
 	const diffArg = makeArg(ARG_NAME);
 	if (diffArg) {
@@ -85,7 +85,7 @@ const makeDateDiff = () => {
 	}
 };
 
-const makeTargetDate = (diff: number) => {
+export const makeTargetDate = (diff: number) => {
 	const currentDate = new Date();
 
 	currentDate.setDate(currentDate.getDate() - diff);
@@ -129,7 +129,7 @@ const convertFromDocToList = (doc: Document): Disclosure[] => {
 	});
 };
 
-const makePath = (i: number, dateStr: string) => {
+export const makePath = (i: number, dateStr: string) => {
 	return 'I_list_' + i.toString().padStart(3, '0') + '_' + dateStr + '.html';
 };
 
