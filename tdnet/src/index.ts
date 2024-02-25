@@ -1,10 +1,14 @@
 import util from 'util';
 import fs from 'fs';
-import path from 'path';
-import { getLastDateDiff, saveLastDate } from './lastdate-repository';
-import { JSDOM } from 'jsdom';
+import {
+	getFavoriteList,
+	getLastDateDiff,
+	saveFavoriteList,
+	saveLastDate,
+} from './file-repository';
+import { getDom } from './http-client';
 
-type Disclosure = {
+export type Disclosure = {
 	datetime: string;
 	code: string | undefined;
 	name: string | undefined;
@@ -19,7 +23,7 @@ type Result = {
 	all: Disclosure[];
 };
 
-const makeLastDate = () => {
+export const makeLastDate = () => {
 	const ARG_NAME = 'last';
 	const LONG_ARG_KEY = ARG_NAME + '=';
 	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
@@ -103,7 +107,7 @@ export const makeTargetDate = (diff: number) => {
 
 const BASE_URL = 'https://www.release.tdnet.info/inbs/';
 
-const convertFromDocToList = (doc: Document): Disclosure[] => {
+export const convertFromDocToList = (doc: Document): Disclosure[] => {
 	const table = doc.getElementById('main-list-table');
 	if (!table) return [];
 	const data = table.getElementsByTagName('tr');
@@ -140,13 +144,10 @@ const getListFromADay = async (dateDiff: number): Promise<Disclosure[]> => {
 
 	for (let index = 1; index < pageSize + 2; index++) {
 		const p = makePath(index, targetDateStr);
-
-		const res = await fetch(BASE_URL + p);
-		const strhtml = await res.text();
-
-		const jsdom = new JSDOM();
-		const parser = new jsdom.window.DOMParser();
-		const doc = parser.parseFromString(strhtml, 'text/html');
+		const doc = await getDom(BASE_URL + p);
+		if (!doc) {
+			continue;
+		}
 		if (index == 1) {
 			pageSize = doc.getElementsByClassName('pager-M').length / 2;
 		}
@@ -155,7 +156,7 @@ const getListFromADay = async (dateDiff: number): Promise<Disclosure[]> => {
 	return list;
 };
 
-const makeTargetCodes = () => {
+export const makeTargetCodes = () => {
 	const ARG_NAME = 'code';
 	const LONG_ARG_KEY = ARG_NAME + '=';
 	const SHORT_ARG_KEY = ARG_NAME.slice(0, 1) + '=';
@@ -166,43 +167,11 @@ const makeTargetCodes = () => {
 	process.argv
 		.filter(arg => arg.startsWith(SHORT_ARG_KEY))
 		.forEach(arg => argCodes.push(arg.replace(SHORT_ARG_KEY, '')));
-	const favoritesFilePath = process.env.FAVORITES_FILE_PATH;
-	let filePath;
-	if (favoritesFilePath) {
-		filePath = favoritesFilePath;
-	} else {
-		filePath = '../.env/favorite.txt';
-	}
-	if (!fs.existsSync(filePath)) {
-		return undefined;
-	}
-	const file = path.resolve(__dirname, filePath);
-	const codes: string[] = [];
-	let newFavorites = '';
-	Array.from(
-		new Set(fs.readFileSync(file).toString().replace(/\s/g, '').split(',')),
-	)
-		.filter(code => !(code == ''))
-		.sort((f, s) => {
-			if (f < s) return -1;
-			if (f > s) return 1;
-			return 0;
-		})
-		.forEach(argCode => {
-			if (argCode.includes('#')) {
-				codes.push(argCode.slice(0, argCode.indexOf('#')));
-			} else {
-				codes.push(argCode);
-			}
-			newFavorites += argCode + ',\n';
-		});
-
+	const codes = getFavoriteList();
 	argCodes.forEach(argCode => {
 		codes.push(argCode);
-		newFavorites += argCode + ',\n';
 	});
-
-	fs.writeFileSync(file, newFavorites);
+	saveFavoriteList(codes);
 
 	if (codes.length > 0) {
 		return codes;
@@ -211,7 +180,7 @@ const makeTargetCodes = () => {
 	}
 };
 
-const sortList = (list: Disclosure[]) => {
+export const sortList = (list: Disclosure[]) => {
 	return list.sort((f, s) => {
 		if (f.datetime < s.datetime) return -1;
 		if (f.datetime > s.datetime) return 1;
@@ -221,7 +190,7 @@ const sortList = (list: Disclosure[]) => {
 	});
 };
 
-(async () => {
+export const main = async () => {
 	const disclosureList: Disclosure[] = [];
 
 	const start = makeStart();
@@ -271,4 +240,6 @@ const sortList = (list: Disclosure[]) => {
 	console.log(
 		'favorites: ' + result.favorites.length + ', all: ' + result.all.length,
 	);
-})();
+};
+
+main();
