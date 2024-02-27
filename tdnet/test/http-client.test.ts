@@ -4,8 +4,10 @@ import { getDom } from '../src/http-client';
 
 describe('getDom', () => {
 	test('normalCase', async () => {
-
-		const res = () => Promise.resolve({text: () => Promise.resolve('<head></head><body></body>'),});
+		const res = () =>
+			Promise.resolve({
+				text: () => Promise.resolve('<head></head><body></body>'),
+			});
 		global.fetch = jest.fn().mockImplementation(res);
 
 		const strhtml = '<head></head><body></body>';
@@ -15,6 +17,6 @@ describe('getDom', () => {
 		const toBe = parser.parseFromString(strhtml, 'text/html');
 		const ex = await getDom('test');
 		expect(ex).toEqual(toBe);
-    global.fetch.mockClear()
+		global.fetch.mockClear();
 	});
 });

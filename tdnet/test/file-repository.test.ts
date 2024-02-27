@@ -1,7 +1,5 @@
 import { describe, test, jest, expect } from '@jest/globals';
 import { getLastDateDiff } from '../src/file-repository';
-import fs from 'fs';
-import path from 'path';
 
 describe('getLastDateDiff', () => {
 	jest.mock('path', () => ({
