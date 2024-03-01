@@ -29,7 +29,7 @@ const downloadFile = async (path: string): Promise<boolean> => {
 	}
 
 	if (fs.existsSync('./downloads/' + fileName)) {
-		console.warn("The gazette was already downloaded.");
+		console.warn('The gazette was already downloaded.');
 		return false;
 	}
 
