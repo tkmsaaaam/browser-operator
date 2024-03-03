@@ -1,5 +1,11 @@
 import { JSDOM } from 'jsdom';
 
+type Movie = {
+	url: string;
+	dateStr: string | null;
+	title: string | null;
+};
+
 (async () => {
 	const theater = process.env.THEATER;
 	if (!theater) {
@@ -22,20 +28,28 @@ import { JSDOM } from 'jsdom';
 		.getElementsByClassName('movieList')[0]
 		.getElementsByTagName('li');
 
-	for (const movie of movieList) {
-		const id = movie.id;
-		if (!id) {
-			continue;
-		}
+	const result: Movie[] = Array.from(movieList)
+		.filter(movie => movie.id)
+		.map(movie => {
+			const em = movie.getElementsByTagName('em')[0];
+			let dateStr: string | null;
+			if (em.textContent) {
+				const start = em.textContent.indexOf('202');
+				if (start != -1) {
+					dateStr = em.textContent.substring(start, start + 10);
+				} else {
+					dateStr = null;
+				}
+			} else {
+				dateStr = null;
+			}
 
-		const em = movie.getElementsByTagName('em')[0];
-		const dateStr = em.textContent?.substring(0, 10);
-
-		const a = movie.getElementsByTagName('a')[0];
-		const url = 'https://www.unitedcinemas.jp' + a.href;
-
-		const title = a.textContent;
-
-		console.log('url: %s, 公開日: %s, タイトル: %s', url, dateStr, title);
-	}
+			const a = movie.getElementsByTagName('a')[0];
+			return {
+				url: 'https://www.unitedcinemas.jp' + a.href,
+				dateStr: dateStr,
+				title: a.textContent,
+			};
+		});
+	console.log('%o', result);
 })();
