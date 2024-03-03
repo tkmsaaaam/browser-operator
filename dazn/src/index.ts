@@ -1,5 +1,5 @@
-import puppeteer from 'puppeteer-core';
 import open from 'open';
+import { JSDOM } from 'jsdom';
 
 type Event = {
 	category: string;
@@ -16,79 +16,88 @@ const DAZN_URL =
 
 const CALENDAR_BASE_URL =
 	'https://www.google.com/calendar/render?action=TEMPLATE';
-const INTERVAL = 10;
-const YEAR = '2023';
+const YEAR = '2024';
 
-const sleep = (time: number): Promise<void> =>
-	new Promise(resolve => setTimeout(resolve, time * 1000));
+const getTdInnerText = (
+	htmlTableElement: HTMLTableElement,
+	i: number,
+): string => {
+	return htmlTableElement.getElementsByTagName('td')[i].textContent!;
+};
+
+const makeEvent = (
+	category: string,
+	table: HTMLTableElement,
+	j: number,
+	gpName: string,
+): Event => {
+	const event: Event = {
+		category: category,
+		gpName: gpName,
+		DateTimeStr: getTdInnerText(table, j * 3).replace('\n', ''),
+		name: getTdInnerText(table, j * 3 + 1).replace('\n', ''),
+		commentators: getTdInnerText(table, j * 3 + 2).replace('\n', ','),
+	};
+	return event;
+};
+
+const pushToEvents = (
+	title: HTMLHeadingElement,
+	gpName: string,
+	raceEvents: Event[],
+) => {
+	const paragragh = title.nextElementSibling as HTMLParagraphElement;
+	if (!paragragh) {
+		console.error('It is not paragraph.');
+		return;
+	}
+
+	const f1Table = paragragh.nextElementSibling as HTMLTableElement;
+	if (!f1Table) {
+		console.error('It is not table.');
+		return;
+	}
+	for (let j = 0; j < 5; j++) {
+		const event: Event = makeEvent('Formula1', f1Table, j, gpName);
+		raceEvents.push(event);
+	}
+
+	const f2Title = f1Table?.nextSibling?.nextSibling as HTMLHeadElement;
+	if (
+		f2Title &&
+		(f2Title as HTMLHeadElement).textContent!.indexOf('F2') != -1
+	) {
+		const f2Table = f2Title.nextSibling?.nextSibling as HTMLTableElement;
+		for (let j = 0; j < 4; j++) {
+			const event: Event = makeEvent('Formula2', f2Table, j, gpName);
+			raceEvents.push(event);
+		}
+	}
+};
 
 (async () => {
 	const targetGpName = process.argv[2];
-	const browser = await puppeteer.launch({
-		channel: 'chrome',
-		headless: true,
-	});
-	const page = await browser.newPage();
-	await page.goto(DAZN_URL);
-	await sleep(INTERVAL);
+	const res = await fetch(DAZN_URL);
+	const strhtml = await res.text();
 
-	const raceEvents = await page.evaluate((gpName: string) => {
-		const events: Events = [];
-		const titles = document.getElementsByTagName('h2');
-		const getTdInnerText = (
-			htmlTableElement: HTMLTableElement,
-			i: number,
-		): string => {
-			return htmlTableElement.getElementsByTagName('td')[i].innerText;
-		};
+	const jsdom = new JSDOM();
+	const parser = new jsdom.window.DOMParser();
+	const doc = parser.parseFromString(strhtml, 'text/html');
 
-		const pushToEvents = (title: HTMLHeadingElement, gpName: string) => {
-			const makeEvent = (
-				category: string,
-				table: HTMLTableElement,
-				j: number,
-			): Event => {
-				const event: Event = {
-					category: category,
-					gpName: gpName,
-					DateTimeStr: getTdInnerText(table, j * 3).replace('\n', ''),
-					name: getTdInnerText(table, j * 3 + 1).replace('\n', ''),
-					commentators: getTdInnerText(table, j * 3 + 2).replace('\n', ','),
-				};
-				return event;
-			};
+	const raceEvents: Events = [];
+	const titles = doc.getElementsByTagName('h2');
 
-			const f1Table = title.nextSibling?.nextSibling as HTMLTableElement;
-			for (let j = 0; j < 5; j++) {
-				const event: Event = makeEvent('Formula1', f1Table, j);
-				events.push(event);
-			}
-
-			const f2Title = f1Table?.nextSibling?.nextSibling as HTMLHeadElement;
-			if (
-				f2Title &&
-				(f2Title as HTMLHeadElement).innerText.indexOf('F2') != -1
-			) {
-				const f2Table = f2Title.nextSibling?.nextSibling as HTMLTableElement;
-				for (let j = 0; j < 4; j++) {
-					const event: Event = makeEvent('Formula2', f2Table, j);
-					events.push(event);
-				}
-			}
-		};
-
-		if (!gpName) {
-			pushToEvents(titles[1], titles[1].innerText);
-			return events;
+	if (!targetGpName) {
+		pushToEvents(titles[1], titles[1].textContent!, raceEvents);
+		return raceEvents;
+	}
+	for (let index = 0; index < titles.length; index++) {
+		const title = titles[index];
+		if (title.textContent && title.textContent.indexOf(targetGpName) != -1) {
+			pushToEvents(title, title.textContent, raceEvents);
 		}
-		for (let index = 0; index < titles.length; index++) {
-			const title = titles[index];
-			if (title.innerText.indexOf(gpName) != -1) {
-				pushToEvents(title, title.innerText);
-			}
-		}
-		return events;
-	}, targetGpName);
+	}
+
 	for (const raceEvent of raceEvents) {
 		const month = raceEvent.DateTimeStr.slice(
 			0,
@@ -113,5 +122,4 @@ const sleep = (time: number): Promise<void> =>
 		const url = `${CALENDAR_BASE_URL}&text=${raceEvent.category}${raceEvent.name}&details=${YEAR}${raceEvent.category}${raceEvent.gpName}${raceEvent.commentators}&dates=${YEAR}${month}${date}T${startTime}00/${YEAR}${month}${date}T${endTime}00`;
 		open(url);
 	}
-	await browser.close();
 })();
