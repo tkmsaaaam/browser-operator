@@ -44,35 +44,38 @@ const makeEvent = (
 const pushToEvents = (
 	title: HTMLHeadingElement,
 	gpName: string,
-	raceEvents: Event[],
-) => {
-	const paragragh = title.nextElementSibling as HTMLParagraphElement;
-	if (!paragragh) {
-		console.error('It is not paragraph.');
-		return;
+): Error | Event[] => {
+	const paragragh = title.nextElementSibling;
+	if (paragragh == null) {
+		const message = 'It is not paragraph.';
+		return new Error(message);
 	}
 
 	const f1Table = paragragh.nextElementSibling as HTMLTableElement;
-	if (!f1Table) {
-		console.error('It is not table.');
-		return;
+	if (f1Table.getElementsByTagName('td').length < 15) {
+		const message = "It doesn't have enough td.";
+		return new Error(message);
 	}
+
+	const raceEvents: Event[] = [];
 	for (let j = 0; j < 5; j++) {
 		const event: Event = makeEvent('Formula1', f1Table, j, gpName);
 		raceEvents.push(event);
 	}
-
-	const f2Title = f1Table?.nextSibling?.nextSibling as HTMLHeadElement;
-	if (
-		f2Title &&
-		(f2Title as HTMLHeadElement).textContent!.indexOf('F2') != -1
-	) {
+	const f2Title = f1Table.nextSibling?.nextSibling as HTMLHeadElement;
+	if (f2Title && f2Title.textContent!.indexOf('F2') != -1) {
 		const f2Table = f2Title.nextSibling?.nextSibling as HTMLTableElement;
 		for (let j = 0; j < 4; j++) {
-			const event: Event = makeEvent('Formula2', f2Table, j, gpName);
+			const event: Event = makeEvent(
+				'Formula2',
+				f2Table,
+				j,
+				f2Title.textContent!,
+			);
 			raceEvents.push(event);
 		}
 	}
+	return raceEvents;
 };
 
 (async () => {
@@ -88,13 +91,31 @@ const pushToEvents = (
 	const titles = doc.getElementsByTagName('h2');
 
 	if (!targetGpName) {
-		pushToEvents(titles[1], titles[1].textContent!, raceEvents);
-		return raceEvents;
+		const events = pushToEvents(titles[1], titles[1].textContent!);
+		if (events instanceof Error) {
+			console.error(events.message);
+			return;
+		} else {
+			for (const e of events) {
+				raceEvents.push(e);
+			}
+		}
 	}
-	for (let index = 0; index < titles.length; index++) {
-		const title = titles[index];
+	for (const title of titles) {
 		if (title.textContent && title.textContent.indexOf(targetGpName) != -1) {
-			pushToEvents(title, title.textContent, raceEvents);
+			console.log(title.textContent);
+			const events = pushToEvents(title, title.textContent);
+			if (events instanceof Error) {
+				console.error(events.message);
+				console.log(title.nextElementSibling?.textContent);
+				console.log(title.nextElementSibling?.nextElementSibling?.textContent);
+				return;
+			} else {
+				for (const e of events) {
+					raceEvents.push(e);
+				}
+			}
+			break;
 		}
 	}
 
