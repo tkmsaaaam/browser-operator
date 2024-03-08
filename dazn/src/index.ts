@@ -1,5 +1,6 @@
 import open from 'open';
 import jsdom from 'jsdom';
+import log4js from 'log4js';
 
 type Event = {
 	category: string;
@@ -19,6 +20,9 @@ const YEAR = '2024';
 const dom = new jsdom.JSDOM();
 const window = dom.window;
 
+const logger = log4js.getLogger();
+logger.level = 'all';
+
 const getTdInnerText = (
 	tds: HTMLCollectionOf<HTMLTableCellElement>,
 	i: number,
@@ -34,14 +38,20 @@ const makeEvent = (
 ): Event => {
 	const event: Event = {
 		category: category,
-		gpName: gpName.replaceAll('\n', ' ').replaceAll('\t', ' '),
+		gpName: gpName
+			.replaceAll(' ', '')
+			.replaceAll('\n', ' ')
+			.replaceAll('\t', ' '),
 		DateTimeStr: getTdInnerText(tds, j * 3)
+			.replaceAll(' ', '')
 			.replaceAll('\n', '')
 			.replaceAll('\t', ' '),
 		name: getTdInnerText(tds, j * 3 + 1)
+			.replaceAll(' ', '')
 			.replaceAll('\n', ' ')
 			.replaceAll('\t', ' '),
 		commentators: getTdInnerText(tds, j * 3 + 2)
+			.replaceAll(' ', '')
 			.replaceAll('\n', ',')
 			.replaceAll('\t', ''),
 	};
@@ -51,29 +61,29 @@ const makeEvent = (
 const pushToEvents = (
 	title: HTMLHeadingElement,
 	gpName: string,
-): Error | Event[] => {
-	const period = title.nextElementSibling;
-	if (!(period instanceof window.HTMLParagraphElement)) {
-		const message = 'It is not period.';
-		return new Error(message + period);
-	}
+): [undefined | Error, Event[]] => {
+	// const period = title.nextElementSibling;
+	// if (!(period instanceof window.HTMLParagraphElement)) {
+	// 	const message = 'It is not period.';
+	// 	return [new Error(message + period), []];
+	// }
 
-	const overview = period.nextElementSibling;
+	const overview = title.nextElementSibling;
 	if (!(overview instanceof window.HTMLHeadingElement)) {
 		const message = 'It is not GP title.';
-		return new Error(message + overview);
+		return [new Error(message + overview), []];
 	}
 
 	const f1Table = overview.nextElementSibling;
 	if (!(f1Table instanceof window.HTMLDivElement)) {
 		const message = 'It is not F1 table.';
-		return new Error(message + f1Table);
+		return [new Error(message + f1Table), []];
 	}
 	const f1Tds = f1Table.getElementsByTagName('td');
 	const f1TdLength = f1Tds.length;
 	if (f1TdLength < 15) {
 		const message = "It doesn't have enough F1 td. Length:";
-		return new Error(message + f1TdLength);
+		return [new Error(message + f1TdLength), []];
 	}
 
 	const raceEvents: Event[] = [];
@@ -83,19 +93,19 @@ const pushToEvents = (
 	}
 	const f2Title = f1Table.nextElementSibling;
 	if (!(f2Title instanceof window.HTMLHeadingElement)) {
-		return raceEvents;
+		return [new Error('It is not F2 title.'), raceEvents];
 	}
 
 	const f2Table = f2Title.nextElementSibling;
 	if (!(f2Table instanceof window.HTMLDivElement)) {
 		const message = 'It is not F2 table.';
-		return new Error(message);
+		return [new Error(message), raceEvents];
 	}
 	const f2Tds = f2Table.getElementsByTagName('td');
 	const f2TdLength = f2Tds.length;
 	if (f2TdLength < 12) {
 		const message = "It doesn't have enough F2 td. Length:";
-		return new Error(message + f2TdLength);
+		return [new Error(message + f2TdLength), raceEvents];
 	}
 	for (let j = 0; j < 4; j++) {
 		const event: Event = makeEvent(
@@ -106,24 +116,28 @@ const pushToEvents = (
 		);
 		raceEvents.push(event);
 	}
-	return raceEvents;
+	return [undefined, raceEvents];
 };
 
 (async () => {
 	const targetGpName = process.argv[2];
+	logger.info(`Started to search ${targetGpName} GP.`);
 	const res = await fetch(DAZN_URL);
+	logger.debug(`Request is finished.(${DAZN_URL})`);
 	const strhtml = await res.text();
 
 	const parser = new dom.window.DOMParser();
 	const doc = parser.parseFromString(strhtml, 'text/html');
+	logger.debug(`DOM is parsed.`);
 
 	const raceEvents: Event[] = [];
 	const titles = doc.getElementsByTagName('h2');
 
 	if (!targetGpName) {
-		const events = pushToEvents(titles[2], titles[2].textContent!);
-		if (events instanceof Error) {
-			console.error(events.message);
+		logger.info(`To get information about ${titles[2].textContent!}`);
+		const [err, events] = pushToEvents(titles[2], titles[2].textContent!);
+		if (err instanceof Error) {
+			logger.error(err.message);
 			return;
 		} else {
 			for (const e of events) {
@@ -132,15 +146,23 @@ const pushToEvents = (
 		}
 	}
 	for (const title of titles) {
-		if (title.textContent && title.textContent.indexOf(targetGpName) != -1) {
-			console.log(title.textContent);
-			const events = pushToEvents(title, title.textContent);
-			if (events instanceof Error) {
-				console.error(events.message);
-				console.log(title.nextElementSibling?.textContent);
-				console.log(title.nextElementSibling?.nextElementSibling?.textContent);
+		if (
+			title instanceof window.HTMLHeadingElement &&
+			title.textContent &&
+			title.textContent.indexOf(targetGpName) != -1
+		) {
+			const [err, events] = pushToEvents(title, title.textContent);
+			if (err instanceof Error && events.length == 0) {
+				logger.error(err.message);
+				logger.info(`GP name is ${title.nextElementSibling?.textContent}`);
+				logger.info(
+					`GP's detail is ${title.nextElementSibling?.nextElementSibling?.textContent}`,
+				);
 				return;
 			} else {
+				if (err instanceof Error) {
+					logger.info(err.message);
+				}
 				for (const e of events) {
 					raceEvents.push(e);
 				}
@@ -183,5 +205,6 @@ const pushToEvents = (
 
 		const url = `${CALENDAR_BASE_URL}&text=${raceEvent.category}${raceEvent.name}&details=${details},${raceEvent.commentators}&dates=${YEAR}${month}${date}T${startTime}00/${YEAR}${month}${date}T${endTime}00`;
 		open(url);
+		logger.info(url);
 	}
 })();
