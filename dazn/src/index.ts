@@ -6,7 +6,7 @@ type Event = {
 	category: string;
 	gpName: string;
 	DateTimeStr: string;
-	name: string;
+	sessionName: string;
 	commentators: string;
 };
 
@@ -26,8 +26,8 @@ logger.level = 'all';
 const getTdInnerText = (
 	tds: HTMLCollectionOf<HTMLTableCellElement>,
 	i: number,
-): string => {
-	return tds[i].textContent!;
+): string | null => {
+	return tds[i].textContent;
 };
 
 const makeEvent = (
@@ -35,22 +35,34 @@ const makeEvent = (
 	j: number,
 	gpName: string,
 	tds: HTMLCollectionOf<HTMLTableCellElement>,
-): Event => {
+): Event | Error => {
+	const dateTimeElementText = getTdInnerText(tds, j * 3);
+	if (dateTimeElementText == null) {
+		return new Error("DateTime element's text is null");
+	}
+	const sessionNameElementText = getTdInnerText(tds, j * 3 + 1);
+	if (sessionNameElementText == null) {
+		return new Error("Name element's text is null");
+	}
+	const commentatorsElementText = getTdInnerText(tds, j * 3 + 2);
+	if (commentatorsElementText == null) {
+		return new Error("Commentators element's text is null");
+	}
 	const event: Event = {
 		category: category,
 		gpName: gpName
 			.replaceAll(' ', '')
 			.replaceAll('\n', ' ')
 			.replaceAll('\t', ' '),
-		DateTimeStr: getTdInnerText(tds, j * 3)
+		DateTimeStr: dateTimeElementText
 			.replaceAll(' ', '')
 			.replaceAll('\n', '')
-			.replaceAll('\t', ' '),
-		name: getTdInnerText(tds, j * 3 + 1)
+			.replaceAll('\t', ''),
+		sessionName: sessionNameElementText
 			.replaceAll(' ', '')
 			.replaceAll('\n', ' ')
 			.replaceAll('\t', ' '),
-		commentators: getTdInnerText(tds, j * 3 + 2)
+		commentators: commentatorsElementText
 			.replaceAll(' ', '')
 			.replaceAll('\n', ',')
 			.replaceAll('\t', ''),
@@ -88,8 +100,12 @@ const pushToEvents = (
 
 	const raceEvents: Event[] = [];
 	for (let j = 0; j < 5; j++) {
-		const event: Event = makeEvent(YEAR + ' F1', j, gpName, f1Tds);
-		raceEvents.push(event);
+		const event = makeEvent(YEAR + ' F1', j, gpName, f1Tds);
+		if (event instanceof Error) {
+			logger.warn(`Can not make event instance. ${event.message}`);
+		} else {
+			raceEvents.push(event);
+		}
 	}
 	const f2Title = f1Table.nextElementSibling;
 	if (!(f2Title instanceof window.HTMLHeadingElement)) {
@@ -108,13 +124,12 @@ const pushToEvents = (
 		return [new Error(message + f2TdLength), raceEvents];
 	}
 	for (let j = 0; j < 4; j++) {
-		const event: Event = makeEvent(
-			YEAR + ' F2',
-			j,
-			f2Title.textContent!,
-			f2Tds,
-		);
-		raceEvents.push(event);
+		const event = makeEvent(YEAR + ' F2', j, f2Title.textContent!, f2Tds);
+		if (event instanceof Error) {
+			logger.warn(`Can not make event instance. ${event.message}`);
+		} else {
+			raceEvents.push(event);
+		}
 	}
 	return [undefined, raceEvents];
 };
@@ -123,6 +138,10 @@ const pushToEvents = (
 	const targetGpName = process.argv[2];
 	logger.info(`Started to search ${targetGpName} GP.`);
 	const res = await fetch(DAZN_URL);
+	if (!res.ok) {
+		logger.error(`Request is failed.(${DAZN_URL})`);
+		return;
+	}
 	logger.debug(`Request is finished.(${DAZN_URL})`);
 	const strhtml = await res.text();
 
@@ -134,40 +153,44 @@ const pushToEvents = (
 	const titles = doc.getElementsByTagName('h2');
 
 	if (!targetGpName) {
-		logger.info(`To get information about ${titles[2].textContent!}`);
-		const [err, events] = pushToEvents(titles[2], titles[2].textContent!);
-		if (err instanceof Error) {
-			logger.error(err.message);
-			return;
-		} else {
-			for (const e of events) {
-				raceEvents.push(e);
-			}
-		}
-	}
-	for (const title of titles) {
-		if (
-			title instanceof window.HTMLHeadingElement &&
-			title.textContent &&
-			title.textContent.indexOf(targetGpName) != -1
-		) {
+		const title = titles[2];
+		if (title instanceof window.HTMLHeadingElement && title.textContent) {
+			logger.info(`To get information about ${title.textContent}`);
 			const [err, events] = pushToEvents(title, title.textContent);
 			if (err instanceof Error && events.length == 0) {
 				logger.error(err.message);
-				logger.info(`GP name is ${title.nextElementSibling?.textContent}`);
-				logger.info(
-					`GP's detail is ${title.nextElementSibling?.nextElementSibling?.textContent}`,
-				);
 				return;
 			} else {
-				if (err instanceof Error) {
-					logger.info(err.message);
-				}
 				for (const e of events) {
 					raceEvents.push(e);
 				}
 			}
-			break;
+		} else {
+			logger.error(
+				`Title does not have enough value. Element: ${title}, textContent: ${title.textContent}`,
+			);
+		}
+	} else {
+		for (const title of titles) {
+			if (
+				title instanceof window.HTMLHeadingElement &&
+				title.textContent &&
+				title.textContent.indexOf(targetGpName) != -1
+			) {
+				const [err, events] = pushToEvents(title, title.textContent);
+				if (err instanceof Error && events.length == 0) {
+					logger.error(err.message);
+					return;
+				} else {
+					if (err instanceof Error) {
+						logger.info(err.message);
+					}
+					for (const e of events) {
+						raceEvents.push(e);
+					}
+				}
+				break;
+			}
 		}
 	}
 
@@ -191,7 +214,7 @@ const pushToEvents = (
 			),
 		).padStart(4, '0');
 		let diff = 100;
-		if (raceEvent.name.indexOf('決勝') != -1) {
+		if (raceEvent.sessionName.indexOf('決勝') != -1) {
 			diff = 200;
 		}
 		const endTime = String(Number(startTime) + diff).padStart(4, '0');
@@ -203,7 +226,7 @@ const pushToEvents = (
 			details = raceEvent.category + raceEvent.gpName;
 		}
 
-		const url = `${CALENDAR_BASE_URL}&text=${raceEvent.category}${raceEvent.name}&details=${details},${raceEvent.commentators}&dates=${YEAR}${month}${date}T${startTime}00/${YEAR}${month}${date}T${endTime}00`;
+		const url = `${CALENDAR_BASE_URL}&text=${raceEvent.category}${raceEvent.sessionName}&details=${details},${raceEvent.commentators}&dates=${YEAR}${month}${date}T${startTime}00/${YEAR}${month}${date}T${endTime}00`;
 		open(url);
 		logger.info(url);
 	}
