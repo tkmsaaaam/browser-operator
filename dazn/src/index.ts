@@ -134,13 +134,10 @@ const pushToEvents = (
 	return [undefined, raceEvents];
 };
 
-(async () => {
-	const targetGpName = process.argv[2];
-	logger.info(`Started to search ${targetGpName} GP.`);
+export const getDom = async (): Promise<Document | Error> => {
 	const res = await fetch(DAZN_URL);
 	if (!res.ok) {
-		logger.error(`Request is failed.(${DAZN_URL})`);
-		return;
+		return new Error(`Request is failed.(${DAZN_URL})`);
 	}
 	logger.debug(`Request is finished.(${DAZN_URL})`);
 	const strhtml = await res.text();
@@ -148,6 +145,17 @@ const pushToEvents = (
 	const parser = new dom.window.DOMParser();
 	const doc = parser.parseFromString(strhtml, 'text/html');
 	logger.debug(`DOM is parsed.`);
+	return doc;
+};
+
+const main = async () => {
+	const targetGpName = process.argv[2];
+
+	const doc = await getDom();
+	if (doc instanceof Error) {
+		logger.error(doc.message);
+		return;
+	}
 
 	const raceEvents: Event[] = [];
 	const titles = doc.getElementsByTagName('h2');
@@ -230,4 +238,8 @@ const pushToEvents = (
 		open(url);
 		logger.info(url);
 	}
-})();
+};
+
+if (process.env.NODE_ENV != 'test') {
+	main();
+}
