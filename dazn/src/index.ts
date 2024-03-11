@@ -70,7 +70,7 @@ const makeEvent = (
 	return event;
 };
 
-const pushToEvents = (
+export const pushToEvents = (
 	title: HTMLHeadingElement,
 	gpName: string,
 ): [undefined | Error, Event[]] => {

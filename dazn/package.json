@@ -7,7 +7,8 @@
     "test": "jest",
     "lint:test": "eslint test/**/*.ts && prettier --write 'test/**/*.ts'",
     "start": "npm run lint && tsc && node lib/index.js $npm_config_gp_name",
-    "lint": "eslint src/**/*.ts && prettier --write 'src/**/*.ts'"
+    "lint": "eslint src/**/*.ts && prettier --write 'src/**/*.ts'",
+    "lint:all": "npm run lint && npm run lint:test"
   },
   "repository": {
     "type": "git",

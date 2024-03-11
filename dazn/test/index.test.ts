@@ -1,6 +1,6 @@
 import { describe, test, jest, expect } from '@jest/globals';
 import jsdom from 'jsdom';
-import { getDom } from '../src';
+import { getDom, pushToEvents } from '../src';
 
 jest.mock('log4js', () => {
 	return {
@@ -16,6 +16,30 @@ jest.mock('log4js', () => {
 
 beforeEach(() => {
 	jest.resetModules();
+});
+
+describe('pushToEvents', () => {
+	const dom = new jsdom.JSDOM();
+	const parser = new dom.window.DOMParser();
+	describe('abnormalCase', () => {
+		test('overview is not present', () => {
+			const strHtml = '<head></head><body><h2>Japanese GP</h2></body>';
+			const doc = parser.parseFromString(strHtml, 'text/html');
+			const title = doc.getElementsByTagName('h2')[0];
+			const [err, events] = pushToEvents(title, 'Japanese GP');
+			expect(err?.message).toBe('It is not GP title.null');
+			expect(events.length).toBe(0);
+		});
+		test('overview is not h3', () => {
+			const strHtml =
+				'<head></head><body><h2>Japanese GP</h2><div></div></body>';
+			const doc = parser.parseFromString(strHtml, 'text/html');
+			const title = doc.getElementsByTagName('h2')[0];
+			const [err, events] = pushToEvents(title, 'Japanese GP');
+			expect(err?.message).toBe('It is not GP title.[object HTMLDivElement]');
+			expect(events.length).toBe(0);
+		});
+	});
 });
 
 describe('getDom', () => {

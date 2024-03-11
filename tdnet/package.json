@@ -5,10 +5,10 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "jest",
-    "testLint": "eslint test/**/*.ts && prettier --write 'test/**/*.ts'",
+    "lint:test": "eslint test/**/*.ts && prettier --write 'test/**/*.ts'",
     "start": "npm run lint && tsc && node lib/index.js",
     "lint": "eslint src/**/*.ts && prettier --write 'src/**/*.ts'",
-    "allLint": "npm run lint && npm run testLint"
+    "lint:all": "npm run lint && npm run lint:test"
   },
   "repository": {
     "type": "git",
