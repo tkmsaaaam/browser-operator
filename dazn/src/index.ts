@@ -17,8 +17,8 @@ const CALENDAR_BASE_URL =
 	'https://www.google.com/calendar/render?action=TEMPLATE';
 const YEAR = '2024';
 
-const dom = new jsdom.JSDOM();
-const window = dom.window;
+export const dom = new jsdom.JSDOM();
+export const window = dom.window;
 
 const logger = log4js.getLogger();
 logger.level = 'all';
