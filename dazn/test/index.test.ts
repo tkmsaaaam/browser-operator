@@ -1,6 +1,6 @@
 import { describe, test, jest, expect } from '@jest/globals';
 import jsdom from 'jsdom';
-import { dom, getDom, pushToEvents } from '../src';
+import { dom, getDom, makeEvent, pushToEvents } from '../src';
 
 jest.mock('log4js', () => {
 	return {
@@ -18,8 +18,29 @@ beforeEach(() => {
 	jest.resetModules();
 });
 
+const parser = new dom.window.DOMParser();
+
+describe('makeEvent', () => {
+	test('normalCase', () => {
+		const strHtml =
+			'<head></head><body><h2>Japanese GP</h2><h3></h3><div><table><tr><td>2024年01月01日\n 12:00\t</td><td>FP1 \n\t</td><td>Max \n\t</td></tr></table></div></body>';
+		const doc = parser.parseFromString(strHtml, 'text/html');
+		const category = 'Formula1';
+		const j = 0;
+		const gpName = 'Japanese GP\t\n';
+		const tds = doc.getElementsByTagName('div')[0].getElementsByTagName('td');
+		const event = makeEvent(category, j, gpName, tds);
+		expect(event).toStrictEqual({
+			category: category,
+			gpName: 'JapaneseGP  ',
+			DateTimeStr: '2024年01月01日12:00',
+			sessionName: 'FP1  ',
+			commentators: 'Max,',
+		});
+	});
+});
+
 describe('pushToEvents', () => {
-	const parser = new dom.window.DOMParser();
 	describe('normalCase', () => {
 		test('only F1', () => {
 			const strHtml =

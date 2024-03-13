@@ -30,23 +30,22 @@ const getTdInnerText = (
 	return tds[i].textContent;
 };
 
-const makeEvent = (
+export const makeEvent = (
 	category: string,
 	j: number,
 	gpName: string,
 	tds: HTMLCollectionOf<HTMLTableCellElement>,
 ): Event | Error => {
 	const dateTimeElementText = getTdInnerText(tds, j * 3);
-	if (dateTimeElementText == null) {
-		return new Error("DateTime element's text is null");
-	}
 	const sessionNameElementText = getTdInnerText(tds, j * 3 + 1);
-	if (sessionNameElementText == null) {
-		return new Error("Name element's text is null");
-	}
 	const commentatorsElementText = getTdInnerText(tds, j * 3 + 2);
-	if (commentatorsElementText == null) {
-		return new Error("Commentators element's text is null");
+	if (
+		dateTimeElementText == null ||
+		sessionNameElementText == null ||
+		commentatorsElementText == null
+	) {
+		/** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Node/textContent) */
+		return new Error('Doctype is included.');
 	}
 	const event: Event = {
 		category: category,
