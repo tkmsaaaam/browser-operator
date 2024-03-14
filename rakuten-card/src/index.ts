@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 import { getPassword } from './authentication';
 import { existsSync, mkdirSync } from 'fs';
+import log4js from 'log4js';
 
 const LOGIN_URL = 'https://www.rakuten-card.co.jp/e-navi/index.xhtml';
 const TOP_URL = 'https://www.rakuten-card.co.jp/e-navi/members/index.xhtml';
@@ -16,6 +17,32 @@ const sleep = (time: number): Promise<void> =>
 	new Promise(resolve => setTimeout(resolve, time * 1000));
 
 const INTERVAL = 10;
+
+const logger = log4js.getLogger();
+logger.level = 'all';
+
+const login = async (
+	page: Page,
+	username: string,
+	password: string,
+): Promise<Page | Error> => {
+	logger.info(`login is started. username: ${username}`);
+	await page.goto(LOGIN_URL);
+	await page.type('input[id="u"]', username);
+	await page.type('input[id="p"]', password);
+	await page.click('input[id="loginButton"]');
+	await sleep(INTERVAL);
+	const res = await page.goto(TOP_URL);
+	if (res?.ok) {
+		await sleep(INTERVAL);
+		logger.info(`login is successed. username: ${username}`);
+		return page;
+	} else {
+		return new Error(
+			`login is failed. username: ${username}, res status: ${res?.statusText}`,
+		);
+	}
+};
 
 const clickLatestPdfUrl = async (page: Page, dir: string): Promise<void> => {
 	await downloadFile(
@@ -43,13 +70,14 @@ const downloadFile = async (page: Page, dir: string, element: string) => {
 };
 
 const getCardCount = async (page: Page) => {
-	return await page.evaluate(() => {
-		return (
-			document.querySelector(
-				'select[id="cardChangeForm:cardtype"]',
-			) as HTMLSelectElement
-		).options.length;
-	});
+	return await page.evaluate(
+		() =>
+			(
+				document.querySelector(
+					'select[id="cardChangeForm:cardtype"]',
+				) as HTMLSelectElement
+			).options.length,
+	);
 };
 
 const makeBaseDir = (): string => {
@@ -68,14 +96,14 @@ const makeBaseDir = (): string => {
 (async (): Promise<void> => {
 	const username = process.env.EMAIL;
 	if (!username) {
-		console.error(
+		logger.error(
 			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env',
 		);
 		return;
 	}
 	const password = getPassword(username);
-	if (!password) {
-		console.error(
+	if (password instanceof Error) {
+		logger.error(
 			'password is not present in KeyChainAccess. Set service: RAKUTEN_CARD, Account: username, Password: password.',
 		);
 		return;
@@ -84,15 +112,12 @@ const makeBaseDir = (): string => {
 		channel: 'chrome',
 		headless: true,
 	});
-	const page = await browser.newPage();
-	await page.goto(LOGIN_URL);
-	await page.type('input[id="u"]', username);
-	await page.type('input[id="p"]', password);
-	await page.click('input[id="loginButton"]');
-	await sleep(INTERVAL);
-	await page.goto(TOP_URL);
-	await sleep(INTERVAL);
-
+	const browserPage = await browser.newPage();
+	const page = await login(browserPage, username, password);
+	if (page instanceof Error) {
+		logger.error(page.message);
+		return;
+	}
 	const cardCount = await getCardCount(page);
 	const baseDir = makeBaseDir();
 
@@ -110,19 +135,33 @@ const makeBaseDir = (): string => {
 			}, index);
 			await sleep(INTERVAL);
 		}
+		const cardName = await page.evaluate(
+			(index: number) =>
+				(
+					document.querySelector(
+						'select[id="cardChangeForm:cardtype"]',
+					) as HTMLSelectElement
+				).options[index].text,
+			index,
+		);
+		logger.info(`Process is started. card name: ${cardName}`);
 
 		await page.goto(DOWNLOAD_LIST_URL);
 		await sleep(INTERVAL);
 		const dir = baseDir + 'rakuten-card-' + index.toString();
 		mkdirSync(dir);
+		logger.info(`PDF download is started. card name: ${cardName}`);
 		await clickLatestPdfUrl(page, dir);
+		logger.info(`PDF download is ended. card name: ${cardName}`);
 		await sleep(INTERVAL);
 
 		await page.goto(DOWNLOAD_CSV_URL);
 		await sleep(INTERVAL);
+		logger.info(`CSV download is started. card name: ${cardName}`);
 		await clickLatestCsvUrl(page, dir);
+		logger.info(`CSV download is ended. card name: ${cardName}`);
 		await sleep(INTERVAL);
+		logger.info(`Process is ended. card name: ${cardName}`);
 	}
-	await sleep(INTERVAL);
 	await browser.close();
 })();
