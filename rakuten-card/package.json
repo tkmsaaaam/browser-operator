@@ -17,7 +17,7 @@
   "bugs": {
     "url": "https://github.com/tkmsaaaam/browser-operator/issues"
   },
-  "homepage": "https://github.com/tkmsaaaam/browser-operator#readme",
+  "homepage": "https://github.com/tkmsaaaam/browser-operator/tree/main/rakuten-card#readme",
   "devDependencies": {
     "@types/node": "^20.11.27",
     "@typescript-eslint/eslint-plugin": "^7.2.0",

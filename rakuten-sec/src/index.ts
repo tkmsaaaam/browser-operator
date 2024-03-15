@@ -6,6 +6,7 @@ import { Favorite, getFavoriteList } from './favorite';
 import * as dotenv from 'dotenv';
 dotenv.config();
 import fs from 'fs';
+import log4js from 'log4js';
 
 type Result = {
 	market: Market;
@@ -13,8 +14,25 @@ type Result = {
 	favoriteList: Favorite[];
 };
 
+const logger = log4js.getLogger();
+logger.level = 'all';
+
 export const sleep = (time: number): Promise<void> =>
 	new Promise(resolve => setTimeout(resolve, time * 1000));
+
+const login = async (
+	page: Page,
+	username: string,
+	password: string,
+): Promise<Page> => {
+	const LOGIN_URL = 'https://www.rakuten-sec.co.jp/';
+	logger.info(`login is started. username: ${username}`);
+	await page.goto(LOGIN_URL);
+	await page.type('input[id="form-login-id"]', username);
+	await page.type('input[id="form-login-pass"]', password);
+	await page.click('button[id="login-btn"]');
+	return page;
+};
 
 const getBvSessionId = async (page: Page): Promise<string> => {
 	for (let index = 0; index < 10; index++) {
@@ -30,14 +48,14 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 (async () => {
 	const username = process.env.USERNAME;
 	if (!username) {
-		console.error(
+		logger.error(
 			'username is not present in .env.\nSet USERNAME in .env to root dir. \n e.g. \n echo USERNAME=${USERNAME} > .env',
 		);
 		return;
 	}
 	const password = getPassword(username);
 	if (!password) {
-		console.error(
+		logger.error(
 			'password is not present in KeyChainAccess. Set service: RAKUTEN_SEC, Account: username, Password: password.',
 		);
 		return;
@@ -58,15 +76,12 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 		});
 	}
 
-	const page = await browser.newPage();
-	const LOGIN_URL = 'https://www.rakuten-sec.co.jp/';
-	await page.goto(LOGIN_URL);
-	await page.type('input[id="form-login-id"]', username);
-	await page.type('input[id="form-login-pass"]', password);
-	await page.click('button[id="login-btn"]');
+	const browserPage = await browser.newPage();
+	const page = await login(browserPage, username, password);
 
 	const bvSessionId = await getBvSessionId(page);
 
+	logger.info('Data is getting...');
 	const market = await getMarket(page, bvSessionId);
 
 	const asset = await getAsset(page, bvSessionId);
@@ -90,9 +105,12 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 	};
 
 	if (process.env.FILE_OUTPUT == 'true') {
+		logger.info('exporting...');
 		fs.writeFile('./output.txt', JSON.stringify(result, null, 2), err => {
 			if (err) {
-				console.log(err);
+				logger.error(err);
+			} else {
+				logger.info('./output.txt is created.');
 			}
 		});
 	}
