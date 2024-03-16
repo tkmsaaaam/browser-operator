@@ -16,8 +16,6 @@ const DOWNLOAD_CSV_URL =
 const sleep = (time: number): Promise<void> =>
 	new Promise(resolve => setTimeout(resolve, time * 1000));
 
-const INTERVAL = 10;
-
 const logger = log4js.getLogger();
 logger.level = 'all';
 
@@ -30,34 +28,39 @@ const login = async (
 	await page.goto(LOGIN_URL);
 	await page.type('input[id="u"]', username);
 	await page.type('input[id="p"]', password);
-	await page.click('input[id="loginButton"]');
-	await sleep(INTERVAL);
-	const res = await page.goto(TOP_URL);
-	if (res?.ok) {
-		await sleep(INTERVAL);
+	await Promise.all([
+		page.waitForNavigation({ waitUntil: 'load' }),
+		page.click('input[id="loginButton"]'),
+	]);
+	const url = page.url();
+	if (url == TOP_URL) {
 		logger.info(`login is successed. username: ${username}`);
 		return page;
 	} else {
 		return new Error(
-			`login is failed. username: ${username}, res status: ${res?.statusText}`,
+			`login is failed. username: ${username}, current url: ${url}`,
 		);
 	}
 };
 
 const clickLatestPdfUrl = async (page: Page, dir: string): Promise<void> => {
-	await downloadFile(
-		page,
-		dir,
-		'a[href="/e-navi/members/statement/download-list.xhtml?downloadAsPdf=0"]',
-	);
+	const selector =
+		'a[href="/e-navi/members/statement/download-list.xhtml?downloadAsPdf=0"]';
+	await Promise.all([
+		page.waitForSelector(selector),
+		page.goto(DOWNLOAD_LIST_URL),
+	]);
+	await downloadFile(page, dir, selector);
 };
 
 const clickLatestCsvUrl = async (page: Page, dir: string): Promise<void> => {
-	await downloadFile(
-		page,
-		dir,
-		'a[href="/e-navi/members/statement/index.xhtml?downloadAsCsv=1"]',
-	);
+	const selector =
+		'a[href="/e-navi/members/statement/index.xhtml?downloadAsCsv=1"]';
+	await Promise.all([
+		page.waitForSelector(selector),
+		page.goto(DOWNLOAD_CSV_URL),
+	]);
+	await downloadFile(page, dir, selector);
 };
 
 const downloadFile = async (page: Page, dir: string, element: string) => {
@@ -66,7 +69,7 @@ const downloadFile = async (page: Page, dir: string, element: string) => {
 		behavior: 'allow',
 		downloadPath: dir,
 	});
-	await page.click(element);
+	await Promise.all([page.click(element), sleep(10)]);
 };
 
 const getCardCount = async (page: Page) => {
@@ -89,7 +92,10 @@ const makeBaseDir = (): string => {
 			return envDir + '/';
 		}
 	} else {
-		return './';
+		if (!existsSync('./downloads')) {
+			mkdirSync('./downloads');
+		}
+		return './downloads/';
 	}
 };
 
@@ -123,8 +129,7 @@ const makeBaseDir = (): string => {
 
 	for (let index = 0; index < cardCount; index++) {
 		if (index != 0) {
-			await page.goto(TOP_URL);
-			await sleep(INTERVAL);
+			await page.goto(TOP_URL, { waitUntil: 'load' });
 			await page.evaluate(index => {
 				(
 					document.querySelector(
@@ -133,7 +138,6 @@ const makeBaseDir = (): string => {
 				).selectedIndex = index;
 				(document.getElementById('cardChangeForm') as HTMLFormElement).submit();
 			}, index);
-			await sleep(INTERVAL);
 		}
 		const cardName = await page.evaluate(
 			(index: number) =>
@@ -146,22 +150,19 @@ const makeBaseDir = (): string => {
 		);
 		logger.info(`Process is started. card name: ${cardName}`);
 
-		await page.goto(DOWNLOAD_LIST_URL);
-		await sleep(INTERVAL);
 		const dir = baseDir + 'rakuten-card-' + index.toString();
-		mkdirSync(dir);
+		if (!existsSync(dir)) {
+			mkdirSync(dir);
+		}
+		logger.info(`Some files will download to: ${dir}`);
 		logger.info(`PDF download is started. card name: ${cardName}`);
 		await clickLatestPdfUrl(page, dir);
 		logger.info(`PDF download is ended. card name: ${cardName}`);
-		await sleep(INTERVAL);
 
-		await page.goto(DOWNLOAD_CSV_URL);
-		await sleep(INTERVAL);
 		logger.info(`CSV download is started. card name: ${cardName}`);
 		await clickLatestCsvUrl(page, dir);
 		logger.info(`CSV download is ended. card name: ${cardName}`);
-		await sleep(INTERVAL);
 		logger.info(`Process is ended. card name: ${cardName}`);
 	}
-	await browser.close();
+	browser.close();
 })();
