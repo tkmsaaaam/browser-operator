@@ -15,6 +15,15 @@
  npm install
 ```
 
+## Enviroments
+
+- EMAIL
+  - required
+  - rakuten card account's email
+- BASE_DIR
+  - optional
+  - The files are dowloaded to the path if this env is present (if it is not present to ./downloads).
+
 ## How to use
 
 ```bash
