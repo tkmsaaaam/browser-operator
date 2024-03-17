@@ -21,7 +21,7 @@
   npm run start
 ```
 
-- then to be outputed to console.
+- then to be output to console.
 
 ## Enviroments
 
@@ -41,4 +41,5 @@
 
 ## Caution
 
-- We will not be held responsible for any inconvenience caused by using this.
+- This and author will not be held responsible for any inconvenience caused by using this.
+- This tool demand to use privately and properly.

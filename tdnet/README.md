@@ -1,6 +1,6 @@
-# browser-operator/rakuten-card
+# browser-operator/rakuten-sec
 
-- This downloads recent Details(PDF, CSV) from [rakuten card](https://www.rakuten-card.co.jp/).
+- This obtains disclosures list from [tdnet](https://www.release.tdnet.info/inbs/).
 
 ## Requirements
 
@@ -17,12 +17,24 @@
 
 ## Enviroments
 
-- EMAIL
-  - required
-  - rakuten card account's email
-- BASE_DIR
+- FILE_OUTPUT
   - optional
-  - The files are dowloaded to the path if this env is present (if it is not present to ./downloads).
+  - output to `./output.txt` if true
+
+## Arguments
+
+- code
+  - optional
+  - securities Code
+- c
+  - optional
+  - securities Code
+- last
+  - optional
+  - last date that list obtained
+- l
+  - optional
+  - last date that list obtained
 
 ## How to use
 
@@ -30,7 +42,7 @@
   npm run start
 ```
 
-- then to be downloaded some details to `./downloads`.
+- then to be that gazettes are downloaded to ./downloads.
 
 ## Caution
 

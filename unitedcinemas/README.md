@@ -1,6 +1,6 @@
-# browser-operator/rakuten-card
+# browser-operator/rakuten-sec
 
-- This downloads recent Details(PDF, CSV) from [rakuten card](https://www.rakuten-card.co.jp/).
+- This obtains movies list from [unitedcinemas](https://www.unitedcinemas.jp/).
 
 ## Requirements
 
@@ -17,12 +17,9 @@
 
 ## Enviroments
 
-- EMAIL
+- THEATER
   - required
-  - rakuten card account's email
-- BASE_DIR
-  - optional
-  - The files are dowloaded to the path if this env is present (if it is not present to ./downloads).
+  - theater name (it is same with path)
 
 ## How to use
 
@@ -30,7 +27,7 @@
   npm run start
 ```
 
-- then to be downloaded some details to `./downloads`.
+- then to be output to console.
 
 ## Caution
 

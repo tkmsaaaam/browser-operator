@@ -1,6 +1,7 @@
-# browser-operator/rakuten-card
+# browser-operator/dazn
 
-- This downloads recent Details(PDF, CSV) from [rakuten card](https://www.rakuten-card.co.jp/).
+- This obtains F1 GP information from [DAZN](https://www.dazn.com/ja-JP/news/%E3%83%A2%E3%83%BC%E3%82%BF%E3%83%BC%E3%82%B9%E3%83%9D%E3%83%BC%E3%83%84/f1-calendar-schedule-broacast/1nyjy9o1q8esy16dsqpurlrwjs).
+- This opens Google Calendar's new event page on browser.
 
 ## Requirements
 
@@ -15,14 +16,9 @@
  npm install
 ```
 
-## Enviroments
+## Arguments
 
-- EMAIL
-  - required
-  - rakuten card account's email
-- BASE_DIR
-  - optional
-  - The files are dowloaded to the path if this env is present (if it is not present to ./downloads).
+1. Grand Prix name
 
 ## How to use
 
@@ -30,7 +26,7 @@
   npm run start
 ```
 
-- then to be downloaded some details to `./downloads`.
+- then to be opened some tabs on default browser
 
 ## Caution
 

@@ -1,6 +1,6 @@
-# browser-operator/rakuten-card
+# browser-operator/rakuten-sec
 
-- This downloads recent Details(PDF, CSV) from [rakuten card](https://www.rakuten-card.co.jp/).
+- This downloads some gazettes(especially extra gazette) from [kanpou](https://kanpou.npb.go.jp).
 
 ## Requirements
 
@@ -15,22 +15,13 @@
  npm install
 ```
 
-## Enviroments
-
-- EMAIL
-  - required
-  - rakuten card account's email
-- BASE_DIR
-  - optional
-  - The files are dowloaded to the path if this env is present (if it is not present to ./downloads).
-
 ## How to use
 
 ```bash
   npm run start
 ```
 
-- then to be downloaded some details to `./downloads`.
+- then to be that gazettes are downloaded to ./downloads.
 
 ## Caution
 
