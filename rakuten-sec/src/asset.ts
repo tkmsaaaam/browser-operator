@@ -1,5 +1,4 @@
 import { Page } from 'puppeteer-core';
-import { sleep } from './index';
 
 export type Asset = {
 	total: Total;
@@ -54,13 +53,15 @@ export const getAsset = async (
 ): Promise<Asset> => {
 	const ALL_ASSET_LIST_URL =
 		'https://member.rakuten-sec.co.jp/app/ass_all_possess_lst.do;';
-	await page.goto(
-		ALL_ASSET_LIST_URL +
-			bvSessionId +
-			'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn=',
-	);
 
-	await sleep(3);
+	await Promise.all([
+		page.waitForSelector('td[class="R1 B3 f105p"] span[class="fb"]'),
+		page.goto(
+			ALL_ASSET_LIST_URL +
+				bvSessionId +
+				'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn=',
+		),
+	]);
 	const assetStrings = await makeAssetStrings(page);
 	return makeAsset(assetStrings);
 };

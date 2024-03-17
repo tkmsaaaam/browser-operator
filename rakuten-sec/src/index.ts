@@ -30,22 +30,18 @@ const login = async (
 	await page.goto(LOGIN_URL);
 	await page.type('input[id="form-login-id"]', username);
 	await page.type('input[id="form-login-pass"]', password);
-	await page.click('button[id="login-btn"]');
+	await Promise.all([
+		page.waitForNavigation({ waitUntil: ['load', 'networkidle2'] }),
+		page.click('button[id="login-btn"]'),
+	]);
 	return page;
 };
 
 const getBvSessionId = async (page: Page): Promise<string> => {
-	for (let index = 0; index < 10; index++) {
-		const INTERVAL = 1;
-		await sleep(INTERVAL);
-		if (page.url().includes('BV_SessionID=')) {
-			return page.url().split(';')[1].split('?')[0];
-		}
-	}
 	return page.url().split(';')[1].split('?')[0];
 };
 
-(async () => {
+const main = async () => {
 	const username = process.env.USERNAME;
 	if (!username) {
 		logger.error(
@@ -115,5 +111,9 @@ const getBvSessionId = async (page: Page): Promise<string> => {
 		});
 	}
 	console.log('%o', result);
-	await browser.close();
-})();
+	browser.close();
+};
+
+if (process.env.NODE_ENV != 'test') {
+	main();
+}

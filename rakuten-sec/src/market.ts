@@ -1,5 +1,4 @@
 import { Page } from 'puppeteer-core';
-import { sleep } from './index';
 
 export type Market = {
 	yenPerDollar: Index;
@@ -30,8 +29,12 @@ export const getMarket = async (
 	bvSessionId: string,
 ): Promise<Market> => {
 	const MARKET_URL = 'https://member.rakuten-sec.co.jp/app/market_top.do;';
-	await page.goto(MARKET_URL + bvSessionId + '?eventType=init');
-	await sleep(3);
+	await Promise.all([
+		page.waitForSelector(
+			'td[id="auto_update_market_index_exchange_XXX31_ask"]',
+		),
+		page.goto(MARKET_URL + bvSessionId + '?eventType=init'),
+	]);
 	const marketStrings = await makeMarketStrings(page);
 	return makeMarket(marketStrings);
 };
