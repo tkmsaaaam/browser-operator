@@ -1,4 +1,5 @@
 import { JSDOM } from 'jsdom';
+import log4js from 'log4js';
 
 type Movie = {
 	url: string;
@@ -6,10 +7,16 @@ type Movie = {
 	title: string | null;
 };
 
+const logger = log4js.getLogger();
+logger.level = 'all';
+
+const jsdom = new JSDOM();
+const parser = new jsdom.window.DOMParser();
+
 (async () => {
 	const theater = process.env.THEATER;
 	if (!theater) {
-		console.error(
+		logger.error(
 			'The theater is not designated. https://www.unitedcinemas.jp/index.html',
 		);
 		return;
@@ -17,11 +24,13 @@ type Movie = {
 
 	const url = 'https://www.unitedcinemas.jp/' + theater + '/movie.php';
 	const res = await fetch(url);
+  if (!res.ok) {
+    logger.error(`HTTP Request is failed. url: ${url} status: ${res.statusText}`)
+    return
+  }
 	const buf = await res.arrayBuffer();
 	const strhtml = new TextDecoder('shift-jis').decode(buf);
 
-	const jsdom = new JSDOM();
-	const parser = new jsdom.window.DOMParser();
 	const doc = parser.parseFromString(strhtml, 'text/html');
 
 	const movieList = doc
