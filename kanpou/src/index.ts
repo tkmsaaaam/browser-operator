@@ -23,7 +23,7 @@ const getDom = async (url: string) => {
 	return parser.parseFromString(strhtml, 'text/html');
 };
 
-const downloadFile = async (path: string): Promise<Error | undefined> => {
+export const makeFileName = (path: string) => {
 	if (path.startsWith('./')) {
 		path = path.substring(1);
 	} else if (!path.startsWith('/')) {
@@ -35,10 +35,15 @@ const downloadFile = async (path: string): Promise<Error | undefined> => {
 		return new Error(`Can not get fileName. path: ${path}`);
 	}
 	if (!fileName.endsWith('.pdf')) {
-		logger.error(`Can not make pdf path. fileName: ${fileName}`);
-		return new Error();
+		return new Error(`Can not make pdf path. fileName: ${fileName}`);
 	}
+	return fileName;
+};
 
+const downloadFile = async (
+	path: string,
+	fileName: string,
+): Promise<Error | undefined> => {
 	if (!fs.existsSync('./downloads')) {
 		fs.mkdirSync('./downloads');
 	}
@@ -84,11 +89,16 @@ const main = async () => {
 		}
 		const href = aList[1].href;
 		if (href == '') break;
-		const res = await downloadFile(href);
-    if (res instanceof Error) {
-      logger.error(res.message);
-      break;
-    }
+		const fileName = makeFileName(href);
+		if (fileName instanceof Error) {
+			logger.error(`Can not make file name. error: ${fileName.message}`);
+			break;
+		}
+		const res = await downloadFile(href, fileName);
+		if (res instanceof Error) {
+			logger.error(`Can not download file. error: ${res.message}`);
+			break;
+		}
 	}
 };
 if (process.env.NODE_ENV != 'test') {

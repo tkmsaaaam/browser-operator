@@ -14,6 +14,12 @@ module.exports = {
 				sourceType: 'script',
 			},
 		},
+		{
+			files: ['tests/**/*'],
+			env: {
+				jest: true,
+			},
+		},
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
