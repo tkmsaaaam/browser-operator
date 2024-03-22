@@ -5,7 +5,6 @@ import { Market, getMarket } from './market';
 import { Favorite, getFavoriteList } from './favorite';
 import * as dotenv from 'dotenv';
 dotenv.config();
-import fs from 'fs';
 import log4js from 'log4js';
 
 type Result = {
@@ -101,16 +100,26 @@ const main = async () => {
 	};
 
 	if (process.env.FILE_OUTPUT == 'true') {
-		logger.info('exporting...');
-		fs.writeFile('./output.txt', JSON.stringify(result, null, 2), err => {
-			if (err) {
-				logger.error(err);
-			} else {
-				logger.info('./output.txt is created.');
-			}
+		log4js.configure({
+			appenders: {
+				out: { type: 'stdout' },
+				file: {
+					type: 'dateFile',
+					filename: 'output.txt',
+					numBackups: 0,
+					layout: { type: 'pattern', pattern: '%m' },
+				},
+			},
+			categories: {
+				default: { appenders: ['out'], level: 'all' },
+				file: { appenders: ['file'], level: 'all' },
+			},
 		});
+		logger.info('exporting...');
+		const fileLogger = log4js.getLogger('file');
+		fileLogger.info(JSON.stringify(result, null, 2));
 	}
-	console.log('%o', result);
+	logger.info(JSON.stringify(result, null, 2));
 	browser.close();
 };
 

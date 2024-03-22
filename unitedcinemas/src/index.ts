@@ -18,13 +18,15 @@ log4js.configure({
 	appenders: {
 		out: { type: 'stdout' },
 		file: {
-			type: 'file',
+			type: 'dateFile',
 			filename: 'output.txt',
+			numBackups: 0,
 			layout: { type: 'pattern', pattern: '%m' },
 		},
 	},
 	categories: {
-		default: { appenders: ['out', 'file'], level: 'all' },
+		default: { appenders: ['out'], level: 'all' },
+		file: { appenders: ['file'], level: 'all' },
 	},
 });
 
@@ -111,6 +113,10 @@ const getCurrent = async (theater: string) => {
 		};
 	});
 
+	if (movieList.length <= 1) {
+		return { current, finishSoon: [] };
+	}
+
 	const finishSoonList = movieList[1].getElementsByClassName('movieHead');
 
 	const finishSoon = Array.from(finishSoonList).map(movie => {
@@ -149,5 +155,6 @@ const getCurrent = async (theater: string) => {
 		publishSoon: publishSoon,
 	};
 
-	logger.info('%o', result);
+	const fileLogger = log4js.getLogger('file');
+	fileLogger.info(JSON.stringify(result, null, 2));
 })();
