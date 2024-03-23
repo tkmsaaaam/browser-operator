@@ -1,5 +1,4 @@
 import util from 'util';
-import fs from 'fs';
 import {
 	getFavoriteList,
 	getLastDateDiff,
@@ -7,6 +6,7 @@ import {
 	saveLastDate,
 } from './file-repository';
 import { getDom } from './http-client';
+import log4js from 'log4js';
 
 export type Disclosure = {
 	datetime: string;
@@ -22,6 +22,9 @@ type Result = {
 	favorites: Disclosure[];
 	all: Disclosure[];
 };
+
+const logger = log4js.getLogger();
+logger.level = 'all';
 
 export const makeLastDate = () => {
 	const ARG_NAME = 'last';
@@ -229,15 +232,28 @@ export const main = async () => {
 	};
 
 	if (process.env.FILE_OUTPUT == 'true') {
-		fs.writeFile('./output.txt', JSON.stringify(result, null, 2), err => {
-			if (err) {
-				console.log(err);
-			}
+		log4js.configure({
+			appenders: {
+				out: { type: 'stdout' },
+				file: {
+					type: 'dateFile',
+					filename: 'output.txt',
+					numBackups: 0,
+					layout: { type: 'pattern', pattern: '%m' },
+				},
+			},
+			categories: {
+				default: { appenders: ['out'], level: 'all' },
+				file: { appenders: ['file'], level: 'all' },
+			},
 		});
+		logger.info('exporting...');
+		const fileLogger = log4js.getLogger('file');
+		fileLogger.info(JSON.stringify(result, null, 2));
 	}
 
-	console.log(util.inspect(result, { maxArrayLength: null }));
-	console.log(
+	logger.info(util.inspect(result, { maxArrayLength: null }));
+	logger.info(
 		'favorites: ' + result.favorites.length + ', all: ' + result.all.length,
 	);
 };
