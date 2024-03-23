@@ -16,9 +16,6 @@ type Result = {
 const logger = log4js.getLogger();
 logger.level = 'all';
 
-export const sleep = (time: number): Promise<void> =>
-	new Promise(resolve => setTimeout(resolve, time * 1000));
-
 const login = async (
 	page: Page,
 	username: string,

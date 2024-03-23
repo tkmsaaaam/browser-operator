@@ -64,7 +64,7 @@ const clickLatestCsvUrl = async (page: Page, dir: string): Promise<void> => {
 };
 
 const downloadFile = async (page: Page, dir: string, element: string) => {
-	const client = await page.target().createCDPSession();
+	const client = await page.createCDPSession();
 	client.send('Page.setDownloadBehavior', {
 		behavior: 'allow',
 		downloadPath: dir,

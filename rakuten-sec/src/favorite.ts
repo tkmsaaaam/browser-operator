@@ -1,5 +1,4 @@
 import { Page } from 'puppeteer-core';
-import { sleep } from './index';
 
 type FavoriteStrings = {
 	code: string;
@@ -26,8 +25,10 @@ export type Favorite = {
 export const getFavoriteList = async (page: Page, bvSessionId: string) => {
 	const FAVORITE_LIST =
 		'https://member.rakuten-sec.co.jp/app/info_jp_prc_reg_lst.do;';
-	await page.goto(FAVORITE_LIST + bvSessionId + '?eventType=init');
-	await sleep(3);
+	await Promise.all([
+		page.waitForSelector('[class="tbl-data-01"]'),
+		page.goto(FAVORITE_LIST + bvSessionId + '?eventType=init'),
+	]);
 	const favoriteStringsList = await makeFavoriteStrings(page);
 	return favoriteStringsList.map(f => makeFavorite(f));
 };
