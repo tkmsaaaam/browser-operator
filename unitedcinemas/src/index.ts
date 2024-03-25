@@ -33,7 +33,7 @@ log4js.configure({
 const jsdom = new JSDOM();
 const parser = new jsdom.window.DOMParser();
 
-const getPublishSoonList = async (theater: string) => {
+export const getPublishSoonList = async (theater: string) => {
 	const url = 'https://www.unitedcinemas.jp/' + theater + '/movie.php';
 	const res = await fetch(url);
 	if (!res.ok) {
@@ -75,7 +75,7 @@ const getPublishSoonList = async (theater: string) => {
 		});
 };
 
-const getCurrent = async (theater: string) => {
+export const getCurrent = async (theater: string) => {
 	const url = 'https://www.unitedcinemas.jp/' + theater + '/film.php';
 	const res = await fetch(url);
 	if (!res.ok) {
@@ -130,7 +130,7 @@ const getCurrent = async (theater: string) => {
 	return { current, finishSoon };
 };
 
-(async () => {
+export const main = async () => {
 	const theater = process.env.THEATER;
 	if (!theater) {
 		logger.error(
@@ -157,4 +157,8 @@ const getCurrent = async (theater: string) => {
 
 	const fileLogger = log4js.getLogger('file');
 	fileLogger.info(JSON.stringify(result, null, 2));
-})();
+};
+
+if (process.env.NODE_ENV != 'test') {
+	main();
+}
