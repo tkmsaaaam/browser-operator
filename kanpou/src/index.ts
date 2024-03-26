@@ -7,7 +7,10 @@ const BASE_URL = 'https://kanpou.npb.go.jp';
 const logger = log4js.getLogger();
 logger.level = 'all';
 
-const getDom = async (url: string) => {
+export const jsdom = new JSDOM();
+export const parser = new jsdom.window.DOMParser();
+
+export const getDom = async (url: string) => {
 	logger.info(`fetch starts. url: ${url}`);
 	const res = await fetch(url);
 	logger.info(`fetch ends. url: ${url}`);
@@ -17,9 +20,6 @@ const getDom = async (url: string) => {
 		);
 	}
 	const strhtml = await res.text();
-
-	const jsdom = new JSDOM();
-	const parser = new jsdom.window.DOMParser();
 	return parser.parseFromString(strhtml, 'text/html');
 };
 
