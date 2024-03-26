@@ -40,7 +40,7 @@ export const makeFileName = (path: string) => {
 	return fileName;
 };
 
-const downloadFile = async (
+export const downloadFile = async (
 	path: string,
 	fileName: string,
 ): Promise<Error | undefined> => {
@@ -61,7 +61,7 @@ const downloadFile = async (
 
 	const buffer = Buffer.from(arrayBuffer);
 	fs.writeFileSync('./downloads/' + fileName, buffer);
-	logger.log('Downloaded: ' + fileName);
+	logger.info('Downloaded: ' + fileName);
 	return;
 };
 

@@ -1,6 +1,8 @@
+/* eslint-disable no-unused-labels */
 import { describe, test, jest, expect } from '@jest/globals';
-import { getDom, jsdom, makeFileName } from '../src';
+import { downloadFile, getDom, jsdom, makeFileName } from '../src';
 
+jest.mock('fs');
 jest.mock('log4js', () => {
 	return {
 		getLogger: jest.fn().mockImplementation(() => ({
@@ -73,6 +75,46 @@ describe('makeFileName', () => {
 			const res = makeFileName(path);
 			expect((res as Error).message).toBe(
 				`Can not make pdf path. fileName: example.csv`,
+			);
+		});
+	});
+});
+describe('downloadFile', () => {
+	test('normalCase', async () => {
+		const fs = () => {
+			existsSync: () => false;
+			mkdirSync: () => {};
+			writeFileSync: () => {};
+		};
+		global.fs = jest.fn().mockImplementation(fs);
+		const res = () =>
+			Promise.resolve({
+				ok: true,
+				arrayBuffer: () =>
+					new Uint16Array([].map.call('str', c => c.charCodeAt(0))).buffer,
+			});
+		global.fetch = jest.fn().mockImplementation(res);
+		const result = await downloadFile('/path', 'fileName');
+		expect(result).toBe(undefined);
+	});
+
+	describe('abnormalCase', () => {
+		test('fetch is error', async () => {
+			const fs = () => {
+				existsSync: () => false;
+				mkdirSync: () => {};
+				writeFileSync: () => {};
+			};
+			global.fs = jest.fn().mockImplementation(fs);
+			const res = () =>
+				Promise.resolve({
+					ok: false,
+				});
+			global.fetch = jest.fn().mockImplementation(res);
+			const result = await downloadFile('/path', 'fileName');
+			expect(result).toBeInstanceOf(Error);
+			expect((result as Error).message).toBe(
+				'Can not get pdf. url: https://kanpou.npb.go.jp/path',
 			);
 		});
 	});
