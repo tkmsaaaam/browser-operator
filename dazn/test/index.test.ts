@@ -1,4 +1,4 @@
-import { describe, test, jest, expect } from '@jest/globals';
+import { describe, test, jest, expect, beforeEach } from '@jest/globals';
 import jsdom from 'jsdom';
 import { dom, getDom, makeEvent, pushToEvents } from '../src';
 
