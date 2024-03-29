@@ -46,9 +46,13 @@ export const getPublishSoonList = async (theater: string) => {
 
 	const doc = parser.parseFromString(strhtml, 'text/html');
 
-	const movieList = doc
-		.getElementsByClassName('movieList')[0]
-		.getElementsByTagName('li');
+	const movieListElements = doc.getElementsByClassName('movieList');
+
+	if (movieListElements.length < 1) {
+		return new Error('HTML is changed.');
+	}
+
+	const movieList = movieListElements[0].getElementsByTagName('li');
 
 	return Array.from(movieList)
 		.filter(movie => movie.id)
@@ -90,15 +94,19 @@ export const getCurrent = async (theater: string) => {
 
 	const movieList = doc.getElementsByClassName('movieList');
 
+	if (movieList.length < 1) {
+		return new Error('HTML is changed.');
+	}
+
 	const currentList = movieList[0].getElementsByClassName('movieHead');
 
 	const current = Array.from(currentList).map(movie => {
-		const em = movie.getElementsByTagName('em');
+		const emList = movie.getElementsByTagName('em');
 		let dateStr: string | null;
-		if (em.length > 0 && em[0].textContent) {
-			const start = em[0].textContent.indexOf('202');
+		if (emList.length > 0 && emList[0].textContent) {
+			const start = emList[0].textContent.indexOf('202');
 			if (start != -1) {
-				dateStr = em[0].textContent.substring(start, start + 10);
+				dateStr = emList[0].textContent.substring(start, start + 10);
 			} else {
 				dateStr = null;
 			}

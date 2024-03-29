@@ -4,34 +4,60 @@ import recording from 'log4js/lib/appenders/recording';
 import { getPublishSoonList, getCurrent, main } from '../src';
 
 describe('getPublishSoonList', () => {
-	test('abnormalCase', async () => {
-		const res = () =>
-			Promise.resolve({
-				ok: false,
-				statusText: '404 Not Found',
-			});
-		global.fetch = jest.fn().mockImplementation(res);
-		const result = await getPublishSoonList('THEATER');
-		expect(result).toBeInstanceOf(Error);
-		expect((result as Error).message).toBe(
-			'HTTP Request is failed. url: https://www.unitedcinemas.jp/THEATER/movie.php status: 404 Not Found',
-		);
+	describe('abnormalCases', () => {
+		test('API is Error', async () => {
+			const res = () =>
+				Promise.resolve({
+					ok: false,
+					statusText: '404 Not Found',
+				});
+			global.fetch = jest.fn().mockImplementation(res);
+			const result = await getPublishSoonList('THEATER');
+			expect(result).toBeInstanceOf(Error);
+			expect((result as Error).message).toBe(
+				'HTTP Request is failed. url: https://www.unitedcinemas.jp/THEATER/movie.php status: 404 Not Found',
+			);
+		});
+		test('HTML is changed', async () => {
+			const res = () =>
+				Promise.resolve({
+					ok: true,
+					arrayBuffer: () => new ArrayBuffer(0),
+				});
+			global.fetch = jest.fn().mockImplementation(res);
+			const result = await getPublishSoonList('THEATER');
+			expect(result).toBeInstanceOf(Error);
+			expect((result as Error).message).toBe('HTML is changed.');
+		});
 	});
 });
 
 describe('getCurrent', () => {
-	test('abnormalCase', async () => {
-		const res = () =>
-			Promise.resolve({
-				ok: false,
-				statusText: '404 Not Found',
-			});
-		global.fetch = jest.fn().mockImplementation(res);
-		const result = await getCurrent('THEATER');
-		expect(result).toBeInstanceOf(Error);
-		expect((result as Error).message).toBe(
-			'HTTP Request is failed. url: https://www.unitedcinemas.jp/THEATER/film.php status: 404 Not Found',
-		);
+	describe('abnormalCases', () => {
+		test('API is Error', async () => {
+			const res = () =>
+				Promise.resolve({
+					ok: false,
+					statusText: '404 Not Found',
+				});
+			global.fetch = jest.fn().mockImplementation(res);
+			const result = await getCurrent('THEATER');
+			expect(result).toBeInstanceOf(Error);
+			expect((result as Error).message).toBe(
+				'HTTP Request is failed. url: https://www.unitedcinemas.jp/THEATER/film.php status: 404 Not Found',
+			);
+		});
+		test('HTML is changed', async () => {
+			const res = () =>
+				Promise.resolve({
+					ok: true,
+					arrayBuffer: () => new ArrayBuffer(0),
+				});
+			global.fetch = jest.fn().mockImplementation(res);
+			const result = await getCurrent('THEATER');
+			expect(result).toBeInstanceOf(Error);
+			expect((result as Error).message).toBe('HTML is changed.');
+		});
 	});
 });
 
