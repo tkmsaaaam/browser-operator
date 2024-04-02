@@ -32,9 +32,10 @@ log4js.configure({
 
 const jsdom = new JSDOM();
 const parser = new jsdom.window.DOMParser();
+global.DOMParser = jsdom.window.DOMParser;
+global.Document = jsdom.window.Document;
 
-export const getPublishSoonList = async (theater: string) => {
-	const url = 'https://www.unitedcinemas.jp/' + theater + '/movie.php';
+export const getDom = async (url: string) => {
 	const res = await fetch(url);
 	if (!res.ok) {
 		return new Error(
@@ -44,7 +45,15 @@ export const getPublishSoonList = async (theater: string) => {
 	const buf = await res.arrayBuffer();
 	const strhtml = new TextDecoder('shift-jis').decode(buf);
 
-	const doc = parser.parseFromString(strhtml, 'text/html');
+	return parser.parseFromString(strhtml, 'text/html');
+};
+
+export const getPublishSoonList = async (theater: string) => {
+	const url = 'https://www.unitedcinemas.jp/' + theater + '/movie.php';
+	const doc = await getDom(url);
+	if (doc instanceof Error) {
+		return new Error(`Can not get publish soon list. ${doc.message}`);
+	}
 
 	const movieListElements = doc.getElementsByClassName('movieList');
 
@@ -81,16 +90,10 @@ export const getPublishSoonList = async (theater: string) => {
 
 export const getCurrent = async (theater: string) => {
 	const url = 'https://www.unitedcinemas.jp/' + theater + '/film.php';
-	const res = await fetch(url);
-	if (!res.ok) {
-		return new Error(
-			`HTTP Request is failed. url: ${url} status: ${res.statusText}`,
-		);
+	const doc = await getDom(url);
+	if (doc instanceof Error) {
+		return new Error(`Can not get current list. ${doc.message}`);
 	}
-	const buf = await res.arrayBuffer();
-	const strhtml = new TextDecoder('shift-jis').decode(buf);
-
-	const doc = parser.parseFromString(strhtml, 'text/html');
 
 	const movieList = doc.getElementsByClassName('movieList');
 
