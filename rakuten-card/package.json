@@ -19,18 +19,18 @@
   },
   "homepage": "https://github.com/tkmsaaaam/browser-operator/tree/main/rakuten-card#readme",
   "devDependencies": {
-    "@types/node": "^20.11.27",
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
+    "@types/node": "^20.12.12",
+    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/parser": "^7.10.0",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-standard": "^17.1.0",
     "log4js": "^6.9.1",
     "prettier": "^3.2.5",
-    "puppeteer": "^22.4.1",
-    "puppeteer-core": "^22.4.1",
+    "puppeteer": "^22.9.0",
+    "puppeteer-core": "^22.9.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.2"
+    "typescript": "^5.4.5"
   }
 }
