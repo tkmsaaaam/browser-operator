@@ -67,7 +67,7 @@ describe('pushToEvents', () => {
 			const doc = parser.parseFromString(strHtml, 'text/html');
 			const title = doc.getElementsByTagName('h2')[0];
 			const [err, events] = pushToEvents(title, 'Japanese GP');
-			expect(err?.message).toBe('It is not GP title.null');
+			expect(err?.message).toBe('It is not GP title. title: Japanese GPnull');
 			expect(events.length).toBe(0);
 		});
 		test('overview is not h3', () => {
@@ -76,7 +76,9 @@ describe('pushToEvents', () => {
 			const doc = parser.parseFromString(strHtml, 'text/html');
 			const title = doc.getElementsByTagName('h2')[0];
 			const [err, events] = pushToEvents(title, 'Japanese GP');
-			expect(err?.message).toBe('It is not GP title.[object HTMLDivElement]');
+			expect(err?.message).toBe(
+				'It is not GP title. title: Japanese GP[object HTMLDivElement]',
+			);
 			expect(events.length).toBe(0);
 		});
 		test('F1 table is not present', () => {

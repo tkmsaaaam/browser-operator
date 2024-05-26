@@ -81,7 +81,7 @@ export const pushToEvents = (
 
 	const overview = title.nextElementSibling;
 	if (!(overview instanceof window.HTMLHeadingElement)) {
-		const message = 'It is not GP title.';
+		const message = `It is not GP title. title: ${title.textContent}`;
 		return [new Error(message + overview), []];
 	}
 
@@ -160,7 +160,7 @@ const main = async () => {
 	const titles = doc.getElementsByTagName('h2');
 
 	if (!targetGpName) {
-		const title = titles[2];
+		const title = titles[1];
 		if (title instanceof window.HTMLHeadingElement && title.textContent) {
 			logger.info(`To get information about ${title.textContent}`);
 			const [err, events] = pushToEvents(title, title.textContent);
@@ -184,6 +184,7 @@ const main = async () => {
 				title.textContent &&
 				title.textContent.indexOf(targetGpName) != -1
 			) {
+				logger.info(`To get information about ${title.textContent}`);
 				const [err, events] = pushToEvents(title, title.textContent);
 				if (err instanceof Error && events.length == 0) {
 					logger.error(err.message);
