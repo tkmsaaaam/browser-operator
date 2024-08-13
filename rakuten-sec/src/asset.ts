@@ -61,6 +61,7 @@ export const getAsset = async (
 				bvSessionId +
 				'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn=',
 		),
+		new Promise(resolve => setTimeout(resolve, 5 * 1000)),
 	]);
 	const assetStrings = await makeAssetStrings(page);
 	return makeAsset(assetStrings);

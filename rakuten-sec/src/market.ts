@@ -34,6 +34,7 @@ export const getMarket = async (
 			'td[id="auto_update_market_index_exchange_XXX31_ask"]',
 		),
 		page.goto(MARKET_URL + bvSessionId + '?eventType=init'),
+		new Promise(resolve => setTimeout(resolve, 5 * 1000)),
 	]);
 	const marketStrings = await makeMarketStrings(page);
 	return makeMarket(marketStrings);
