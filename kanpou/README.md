@@ -1,5 +1,7 @@
 # browser-operator/rakuten-sec
 
+## Deprecated
+
 - This downloads some gazettes(especially extra gazette) from [kanpou](https://kanpou.npb.go.jp).
 
 ## Requirements
