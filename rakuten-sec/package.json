@@ -6,6 +6,7 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "npm run lint && tsc && node lib/index.js",
+    "job": "tsc && node lib/index.js",
 		"lint": "eslint src/**/*.ts && prettier --write 'src/**/*.ts' && prettier --write '**/*.json'"
 	},
 	"repository": {
@@ -19,17 +20,16 @@
 	},
 	"homepage": "https://github.com/tkmsaaaam/browser-operator/tree/main/rakuten-sec#readme",
 	"devDependencies": {
-		"@types/node": "^22.2.0",
+		"@types/node": "^22.3.0",
 		"@typescript-eslint/eslint-plugin": "^8.1.0",
 		"@typescript-eslint/parser": "^8.1.0",
 		"dotenv": "^16.3.1",
-		"eslint": "^8.57.0",
+		"eslint": "^9.9.0",
 		"eslint-config-prettier": "^9.1.0",
-		"eslint-config-standard": "^17.1.0",
 		"log4js": "^6.9.1",
 		"prettier": "^3.3.3",
-		"puppeteer": "^23.0.2",
-		"puppeteer-core": "^23.0.2",
+		"puppeteer": "^23.1.0",
+		"puppeteer-core": "^23.1.0",
 		"ts-node": "^10.9.1",
 		"typescript": "^5.5.4"
 	}
