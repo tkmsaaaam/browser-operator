@@ -23,13 +23,13 @@ const login = async (
 ): Promise<Page> => {
 	const LOGIN_URL = 'https://www.rakuten-sec.co.jp/';
 	logger.info(`login is started. username: ${username}`);
-	await page.goto(LOGIN_URL, { timeout: 60000 });
+	await page.goto(LOGIN_URL, { timeout: 300000 });
 	await page.type('input[id="form-login-id"]', username);
 	await page.type('input[id="form-login-pass"]', password);
 	await Promise.all([
 		page.waitForNavigation({
 			waitUntil: ['load', 'networkidle2'],
-			timeout: 60000,
+			timeout: 300000,
 		}),
 		page.click('button[id="login-btn"]'),
 	]);

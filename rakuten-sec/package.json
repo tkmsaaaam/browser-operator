@@ -6,7 +6,7 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "npm run lint && tsc && node lib/index.js",
-    "job": "tsc && node lib/index.js",
+		"job": "tsc && node lib/index.js",
 		"lint": "eslint src/**/*.ts && prettier --write 'src/**/*.ts' && prettier --write '**/*.json'"
 	},
 	"repository": {

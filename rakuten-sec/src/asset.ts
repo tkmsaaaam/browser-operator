@@ -56,13 +56,13 @@ export const getAsset = async (
 
 	await Promise.all([
 		page.waitForSelector('td[class="R1 B3 f105p"] span[class="fb"]', {
-			timeout: 60000,
+			timeout: 300000,
 		}),
 		page.goto(
 			ALL_ASSET_LIST_URL +
 				bvSessionId +
 				'?eventType=directInit&l-id=mem_pc_top_all-possess-lst&gmn=H&smn=01&lmn=&fmn=',
-			{ timeout: 60000 },
+			{ timeout: 300000 },
 		),
 		new Promise(resolve => setTimeout(resolve, 5 * 1000)),
 	]);
