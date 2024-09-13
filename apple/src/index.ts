@@ -41,11 +41,8 @@ export const main = async () => {
 	if (doc instanceof Error) {
 		return new Error(`Can not get publish soon list. ${doc.message}`);
 	}
-	// const results = doc.getElementsByClassName('rf-refurb-results');
 	const results = doc.getElementsByClassName('rf-refurb-category-grid-no-js');
-	logger.info(results.length);
 	const products = results[0].getElementsByTagName('li');
-	logger.info(products.length);
 	const res = Array.from(products)
 		.map(product => {
 			const name = product.getElementsByTagName('h3')[0].textContent?.trim();
