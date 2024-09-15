@@ -45,13 +45,16 @@ export const main = async () => {
 	const products = results[0].getElementsByTagName('li');
 	const res = Array.from(products)
 		.map(product => {
-			const name = product.getElementsByTagName('h3')[0].textContent?.trim();
+			const e = product.getElementsByTagName('h3')[0];
+			const url = e.getElementsByTagName('a')[0].href;
+			const name = e.textContent?.trim();
 			const price = product
 				.getElementsByTagName('div')[0]
 				.textContent?.replace(/[^0-9]/g, '')
 				.trim();
 			return {
 				name: name,
+				url: 'https://www.apple.com' + url,
 				price: price,
 			};
 		})
