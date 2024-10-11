@@ -37,6 +37,7 @@ const main = async () => {
 		}),
 		sleep(1),
 	]);
+	logger.info('started');
 
 	const res = await makeResult(page);
 
@@ -45,7 +46,7 @@ const main = async () => {
 	} else {
 		logger.info(`tried ${res.count} times. avg: ${res.sum / res.count} Mbps`);
 	}
-	browser.close();
+	await browser.close();
 };
 
 type Speed = {
@@ -82,17 +83,19 @@ const makeResult = async (page: Page): Promise<Result | undefined> => {
 		const v = await getSpeed(page);
 		if (v.value == '0') {
 			logger.error(`Can not get speed. ${j + 1}`);
-			if (b) {
-				if (j == 1) {
-					return;
-				}
-				const res: Result = {
-					count: i,
-					sum: sum,
-				};
-				return res;
+			if (!b) {
+				b = true;
+				continue;
 			}
-			b = true;
+			if (j == 1) {
+				// 二回連続なのでundefinedで終了
+				return;
+			}
+			const res: Result = {
+				count: i,
+				sum: sum,
+			};
+			return res;
 		} else {
 			logger.info(`speed: ${v.value} ${v.unit} (${j + 1})`);
 			i++;
@@ -101,8 +104,11 @@ const makeResult = async (page: Page): Promise<Result | undefined> => {
 				k = Number(v.value) * 1000;
 			} else if (v.unit == 'Mbps') {
 				k = Number(v.value);
-			} else {
+			} else if (v.unit == 'Kbps') {
 				k = Number(v.value) / 1000;
+			} else {
+				k = 0;
+				i--;
 			}
 			sum = sum + k;
 		}
