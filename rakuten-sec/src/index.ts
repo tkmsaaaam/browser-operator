@@ -21,7 +21,7 @@ const login = async (
 	username: string,
 	password: string,
 ): Promise<Page> => {
-	const LOGIN_URL = 'https://www.rakuten-sec.co.jp/';
+	const LOGIN_URL = 'https://www.rakuten-sec.co.jp/ITS/V_ACT_Login.html';
 	logger.info(`login is started. username: ${username}`);
 	await page.goto(LOGIN_URL, { timeout: 300000 });
 	await page.type('input[id="form-login-id"]', username);
