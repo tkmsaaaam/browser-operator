@@ -24,14 +24,15 @@ const login = async (
 	const LOGIN_URL = 'https://www.rakuten-sec.co.jp/ITS/V_ACT_Login.html';
 	logger.info(`login is started. username: ${username}`);
 	await page.goto(LOGIN_URL, { timeout: 300000 });
+	await page.waitForSelector('button[id="login-btn"]', {
+		timeout: 300000,
+	});
 	await page.type('input[id="form-login-id"]', username);
 	await page.type('input[id="form-login-pass"]', password);
-	await Promise.all([
-		page.waitForSelector('button[id="login-btn"]', {
-			timeout: 300000,
-		}),
-		page.click('button[id="login-btn"]'),
-	]);
+	await page.click('button[id="login-btn"]');
+	await page.waitForSelector('div[id="table_data"]', {
+		timeout: 300000,
+	});
 	return page;
 };
 
@@ -71,12 +72,35 @@ const main = async () => {
 	}
 
 	const browserPage = await browser.newPage();
+	await browserPage.setRequestInterception(true);
+	browserPage.on('request', request => {
+		if (
+			request.url().startsWith('https://www.rakuten-sec.co.jp/web/images') ||
+			request
+				.url()
+				.startsWith('https://www.rakuten-sec.co.jp/web/shared/css') ||
+			request
+				.url()
+				.startsWith('https://www.rakuten-sec.co.jp/web/shared/img') ||
+			request
+				.url()
+				.startsWith('https://www.rakuten-sec.co.jp/web/shared/images') ||
+			request
+				.url()
+				.startsWith('https://member.rakuten-sec.co.jp/member/images') ||
+			request
+				.url()
+				.startsWith('https://member.rakuten-sec.co.jp/member/assets') ||
+			request
+				.url()
+				.startsWith('https://member.rakuten-sec.co.jp/member/html/images')
+		) {
+			request.abort().catch(err => console.error(err));
+		} else {
+			request.continue().catch(err => console.error(err));
+		}
+	});
 	const page = await login(browserPage, username, password);
-
-	if (!page.url().includes('?') || !page.url().includes(';')) {
-		logger.info(page.url());
-		return;
-	}
 
 	const bvSessionId = await getBvSessionId(page);
 
