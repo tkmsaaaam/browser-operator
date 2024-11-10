@@ -27,8 +27,7 @@ const login = async (
 	await page.type('input[id="form-login-id"]', username);
 	await page.type('input[id="form-login-pass"]', password);
 	await Promise.all([
-		page.waitForNavigation({
-			waitUntil: ['load', 'networkidle2'],
+		page.waitForSelector('button[id="login-btn"]', {
 			timeout: 300000,
 		}),
 		page.click('button[id="login-btn"]'),
