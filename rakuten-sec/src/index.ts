@@ -73,6 +73,11 @@ const main = async () => {
 	const browserPage = await browser.newPage();
 	const page = await login(browserPage, username, password);
 
+	if (!page.url().includes('?') || !page.url().includes(';')) {
+		logger.info(page.url());
+		return;
+	}
+
 	const bvSessionId = await getBvSessionId(page);
 
 	logger.info('Data is getting...');
