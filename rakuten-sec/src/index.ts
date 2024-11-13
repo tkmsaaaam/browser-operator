@@ -75,25 +75,45 @@ const main = async () => {
 	await browserPage.setRequestInterception(true);
 	browserPage.on('request', request => {
 		if (
+			request.url().startsWith('https://cdnjs.cloudflare.com') ||
+			request.url().startsWith('https://code.usergram.info') ||
+			request
+				.url()
+				.startsWith('https://c.marsflag.com/mf/mfx/1.0-latest/js/') ||
+			request.url().startsWith('https://fonts.googleapis.com/css') ||
+			request.url().startsWith('https://jp.rakuten-static.com/1') ||
+			request.url().startsWith('https://rakuten-sec-me.marsflag.com/') ||
+			request
+				.url()
+				.startsWith('https://member.rakuten-sec.co.jp/member/assets') ||
+			request
+				.url()
+				.startsWith('https://member.rakuten-sec.co.jp/member/css/') ||
+			request
+				.url()
+				.startsWith('https://member.rakuten-sec.co.jp/member/images') ||
+			// request.url().startsWith('https://member.rakuten-sec.co.jp/member/js/')
+			request
+				.url()
+				.startsWith('https://member.rakuten-sec.co.jp/member/html/') ||
+			request.url().startsWith('https://www.rakuten-sec.co.jp/ITS/resource/') ||
+			request.url().startsWith('https://r.r10s.jp') ||
+			request.url().startsWith('https://www.googleadservices.com/pagead') ||
+			request.url().startsWith('https://www.googletagmanager.com/') ||
+			request.url().startsWith('https://www.rakuten.co.jp/com/advance/') ||
 			request.url().startsWith('https://www.rakuten-sec.co.jp/web/images') ||
 			request
 				.url()
 				.startsWith('https://www.rakuten-sec.co.jp/web/shared/css') ||
 			request
 				.url()
-				.startsWith('https://www.rakuten-sec.co.jp/web/shared/img') ||
-			request
-				.url()
 				.startsWith('https://www.rakuten-sec.co.jp/web/shared/images') ||
 			request
 				.url()
-				.startsWith('https://member.rakuten-sec.co.jp/member/images') ||
-			request
-				.url()
-				.startsWith('https://member.rakuten-sec.co.jp/member/assets') ||
-			request
-				.url()
-				.startsWith('https://member.rakuten-sec.co.jp/member/html/images')
+				.startsWith('https://www.rakuten-sec.co.jp/web/shared/img') ||
+			request.url().startsWith('https://www.trkd-asia.com/') ||
+			request.url().startsWith('https://s.yjtag.jp/tag.js') ||
+			request.url().includes('akamaihd.net/')
 		) {
 			request.abort().catch(err => console.error(err));
 		} else {
