@@ -11,7 +11,7 @@ import {
 	makeTargetCodes,
 	makeTargetDate,
 	sortList,
-} from '../src/index';
+} from '../src';
 import { JSDOM } from 'jsdom';
 
 jest.mock('../src/file-repository', () => ({
@@ -152,7 +152,7 @@ describe('convertFromDocToList', () => {
 		const jsdom = new JSDOM();
 		const parser = new jsdom.window.DOMParser();
 		const strhtml =
-			'<!DOCTYPE html><html><head></head><body><form><table><tr><td><div><table><tr><td><div id="kaiji-date-1">2024年01月01日</div><div id="kaiji-text-1">に開示された情報はありません。</div></td></tr></table></div></td></tr></table></form></body></html>';
+			'<!DOCTYPE html><html lang="ja"><head><title>title</title></head><body><form><table><tr><td><div><table><tr><td><div id="kaiji-date-1">2024年01月01日</div><div id="kaiji-text-1">に開示された情報はありません。</div></td></tr></table></div></td></tr></table></form></body></html>';
 		const doc = parser.parseFromString(strhtml, 'text/html');
 		expect(convertFromDocToList(doc).toString()).toBe([].toString());
 	});
@@ -160,7 +160,7 @@ describe('convertFromDocToList', () => {
 		const jsdom = new JSDOM();
 		const parser = new jsdom.window.DOMParser();
 		const strhtml =
-			'<!DOCTYPE html><html><head></head><body><form><table><tr><table><tr><td><div id="kaiji-date-1">2024年01月01日</div><div>に開示された情報</div></td></tr></table><table><tr><td>時刻</td><td>コード</td><td>会社名</td><td>表題</td><td>XBRL</td><td>上場取引所</td><td>更新履歴</td></tr></table></div><div><table id="main-list-table"><tr><td>08:00</td><td>0000</td><td>companyA</td><td><a href="companyA.pdf" target="_blank">配当に関するお知らせ</a></td><td></td><td>東</td><td></td></tr></table></div></td></tr></table></form></body></html>';
+			'<!DOCTYPE html><html lang="ja"><head><title>title</title></head><body><form><table><tr><table><tr><td><div id="kaiji-date-1">2024年01月01日</div><div>に開示された情報</div></td></tr></table><table><tr><td>時刻</td><td>コード</td><td>会社名</td><td>表題</td><td>XBRL</td><td>上場取引所</td><td>更新履歴</td></tr></table></div><div><table id="main-list-table"><tr><td>08:00</td><td>0000</td><td>companyA</td><td><a href="companyA.pdf" target="_blank">配当に関するお知らせ</a></td><td></td><td>東</td><td></td></tr></table></div></td></tr></table></form></body></html>';
 		const doc = parser.parseFromString(strhtml, 'text/html');
 		const result: Disclosure[] = [
 			{
@@ -179,7 +179,7 @@ describe('convertFromDocToList', () => {
 		const jsdom = new JSDOM();
 		const parser = new jsdom.window.DOMParser();
 		const strhtml =
-			'<!DOCTYPE html><html><head></head><body><form><table><tr><table><tr><td><div id="kaiji-date-1"></div><div>に開示された情報</div></td></tr></table><table><tr><td>時刻</td><td>コード</td><td>会社名</td><td>表題</td><td>XBRL</td><td>上場取引所</td><td>更新履歴</td></tr></table></div><div><table id="main-list-table"><tr><td>08:00</td><td>0000</td><td>companyA</td><td><a href="companyA.pdf" target="_blank">配当に関するお知らせ</a></td><td></td><td>東</td><td></td></tr></table></div></td></tr></table></form></body></html>';
+			'<!DOCTYPE html><html lang="ja"><head><title>title</title></head><body><form><table><tr><table><tr><td><div id="kaiji-date-1"></div><div>に開示された情報</div></td></tr></table><table><tr><td>時刻</td><td>コード</td><td>会社名</td><td>表題</td><td>XBRL</td><td>上場取引所</td><td>更新履歴</td></tr></table></div><div><table id="main-list-table"><tr><td>08:00</td><td>0000</td><td>companyA</td><td><a href="companyA.pdf" target="_blank">配当に関するお知らせ</a></td><td></td><td>東</td><td></td></tr></table></div></td></tr></table></form></body></html>';
 		const doc = parser.parseFromString(strhtml, 'text/html');
 		expect(convertFromDocToList(doc).toString()).toBe([].toString());
 	});

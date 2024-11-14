@@ -168,9 +168,9 @@ const main = async () => {
 		fileLogger.info(JSON.stringify(result, null, 2));
 	}
 	logger.info(JSON.stringify(result, null, 2));
-	browser.close();
+	await browser.close();
 };
 
 if (process.env.NODE_ENV != 'test') {
-	main();
+	main().then();
 }

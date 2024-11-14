@@ -34,7 +34,7 @@ const login = async (
 	]);
 	const url = page.url();
 	if (url == TOP_URL) {
-		logger.info(`login is successed. username: ${username}`);
+		logger.info(`login is succeeded. username: ${username}`);
 		return page;
 	} else {
 		return new Error(
@@ -65,7 +65,7 @@ const clickLatestCsvUrl = async (page: Page, dir: string): Promise<void> => {
 
 const downloadFile = async (page: Page, dir: string, element: string) => {
 	const client = await page.createCDPSession();
-	client.send('Page.setDownloadBehavior', {
+	await client.send('Page.setDownloadBehavior', {
 		behavior: 'allow',
 		downloadPath: dir,
 	});
@@ -164,5 +164,5 @@ const makeBaseDir = (): string => {
 		logger.info(`CSV download is ended. card name: ${cardName}`);
 		logger.info(`Process is ended. card name: ${cardName}`);
 	}
-	browser.close();
+	await browser.close();
 })();

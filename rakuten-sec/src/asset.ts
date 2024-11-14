@@ -132,8 +132,8 @@ const makeAsset = (assetStrings: AssetStrings): Asset => {
 };
 
 const makeTotal = (totalStrings: TotalStrings): Total => {
-	const amount = Number(totalStrings.amount.replace(/円|,/g, ''));
-	const diff = Number(totalStrings.diff.replace(/円|,/g, ''));
+	const amount = Number(totalStrings.amount.replace(/[円,]/g, ''));
+	const diff = Number(totalStrings.diff.replace(/[円,]/g, ''));
 	return {
 		amount: amount,
 		diff: diff,
@@ -146,9 +146,9 @@ const makePossess = (possessStrings: PossessStrings): Possess => {
 		possessStrings.currentPrice.replace(/円\/USD|円|USD|,/g, ''),
 	);
 	const diff = Number(possessStrings.diff.replace(/円|USD|円\/USD|,/g, ''));
-	const profit = Number(possessStrings.profit.replace(/円|,|\n|\t/g, ''));
-	const totalAmount = Number(possessStrings.totalAmount.replace(/円|,/g, ''));
-	let profitRate = 0;
+	const profit = Number(possessStrings.profit.replace(/[円,\n\t]/g, ''));
+	const totalAmount = Number(possessStrings.totalAmount.replace(/[円,]/g, ''));
+	let profitRate: number;
 	if (profit >= 0) {
 		profitRate = profit / totalAmount;
 	} else {

@@ -6,11 +6,11 @@ describe('getDom', () => {
 	test('normalCase', async () => {
 		const res = () =>
 			Promise.resolve({
-				text: () => Promise.resolve('<head></head><body></body>'),
+				text: () => Promise.resolve('<head><title>title</title></head><body></body>'),
 			});
 		global.fetch = jest.fn().mockImplementation(res);
 
-		const strhtml = '<head></head><body></body>';
+		const strhtml = '<head><title>title</title></head><body></body>';
 
 		const jsdom = new JSDOM();
 		const parser = new jsdom.window.DOMParser();

@@ -171,5 +171,5 @@ export const main = async () => {
 };
 
 if (process.env.NODE_ENV != 'test') {
-	main();
+	main().then();
 }

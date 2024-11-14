@@ -120,7 +120,7 @@ export const convertFromDocToList = (doc: Document): Disclosure[] => {
 
 	if (!dateStr) return [];
 
-	const date = dateStr.replace(/年|月/g, '/').replace('日', ' ');
+	const date = dateStr.replace(/[年月]/g, '/').replace('日', ' ');
 	return Array.from(data).map(row => {
 		return {
 			datetime: date + row.getElementsByTagName('td')[0].textContent?.trim(),
@@ -259,5 +259,5 @@ export const main = async () => {
 };
 
 if (process.env.NODE_ENV != 'test') {
-	main();
+	main().then();
 }

@@ -51,11 +51,11 @@ const makeFavoriteStrings = async (page: Page): Promise<FavoriteStrings[]> => {
 				code: element[1].innerText,
 				name: element[3].innerText,
 				market: element[6].innerText,
-				current: element[7].innerText.replace(/↓|↑|,/g, ''),
+				current: element[7].innerText.replace(/[↓↑,]/g, ''),
 				updatedAt: element[8].innerText,
 				diff: element[9].innerText,
 				diffRate: element[10].innerText.replace('%', ''),
-				transaction: element[11].innerText.replace(/株|,/g, ''),
+				transaction: element[11].innerText.replace(/[株,]/g, ''),
 			};
 			list.push(favorite);
 		}
@@ -68,10 +68,10 @@ const makeFavorite = (favoriteStrings: FavoriteStrings): Favorite => {
 		code: Number(favoriteStrings.code),
 		name: favoriteStrings.name,
 		market: favoriteStrings.market,
-		current: Number(favoriteStrings.current.replace(/↓|↑|,/g, '')),
+		current: Number(favoriteStrings.current.replace(/[↓↑,]/g, '')),
 		updatedAt: favoriteStrings.updatedAt,
 		diff: Number(favoriteStrings.diff),
 		diffRate: Number(favoriteStrings.diffRate.replace('%', '')),
-		transaction: Number(favoriteStrings.transaction.replace(/株|,/g, '')),
+		transaction: Number(favoriteStrings.transaction.replace(/[株,]/g, '')),
 	};
 };
