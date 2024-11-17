@@ -6,12 +6,16 @@ import log4js from 'log4js';
 const TOP_URL = 'https://www.duolingo.com';
 
 type Result = {
-	order: Number;
-	map: Map<Number, Number>;
+	rank: Number;
+	score: Number;
+	passing: Number;
+	errors: Error[];
 };
 
 const logger = log4js.getLogger();
 logger.level = 'all';
+const sleep = (time: number): Promise<void> =>
+	new Promise(resolve => setTimeout(resolve, time * 1000));
 
 const login = async (
 	page: Page,
@@ -24,6 +28,7 @@ const login = async (
 	await page.click('[data-test="have-account"]');
 	await page.type('input[id="web-ui1"]', username);
 	await page.type('input[id="web-ui2"]', password);
+	await sleep(1);
 	await page.waitForSelector('[type="submit"]');
 	await page.click('[type="submit"]');
 	await page.waitForSelector('._27IMa');
@@ -31,35 +36,48 @@ const login = async (
 	return page;
 };
 
-const getLeaderboard = async (page: Page): Promise<Result> => {
+const makeResult = async (page: Page): Promise<Result> => {
 	await page.goto('https://www.duolingo.com/leaderboard');
+	await sleep(1);
 	await page.waitForSelector('.MytTp');
-	await page.waitForSelector('._5W_8K');
+	await page.waitForSelector('._3kvGS._5W_8K._7trGg');
 	await page.waitForSelector('._1kz8P');
 	await page.waitForSelector('._1OKd4');
 	const res: Result = {
-		order: 0,
-		map: new Map(),
+		rank: 0,
+		score: 0,
+		passing: 0,
+		errors: [],
 	};
 	return await page.evaluate((result: Result) => {
 		const list: HTMLCollectionOf<Element> =
 			document.getElementsByClassName('_5W_8K');
-		for (let i = 0; i < list.length; i++) {
-			const key = parseInt(
-				list[i].getElementsByClassName('_1kz8P')[0].innerHTML,
-			);
-			const value = parseInt(
-				list[i]
-					.getElementsByClassName('_1OKd4')[0]
-					.innerHTML.replace(' XP', ''),
-			);
-			result.map.set(key, value);
+		if (list.length === 0) {
+			result.errors.push(new Error(`No results found leaderboard`));
 		}
-		result.order = parseInt(
-			document
-				.getElementsByClassName('MytTp')[0]
-				.getElementsByTagName('span')[0].innerText,
-		);
+		const boarder = list[24].getElementsByClassName('_1OKd4');
+		if (boarder.length == 0) {
+			result.errors.push(new Error(`No results found passing score`));
+			return result;
+		}
+		result.passing = parseInt(boarder[0].innerHTML.replace(' XP', ''));
+		const myRank = document.getElementsByClassName('MytTp');
+		if (myRank.length == 0) {
+			result.errors.push(new Error(`No results found my rank`));
+			return result;
+		}
+		const order = myRank[0].getElementsByClassName('_1kz8P');
+		if (order.length == 0) {
+			result.errors.push(new Error(`No results found rank`));
+			return result;
+		}
+		const score = myRank[0].getElementsByClassName('_1OKd4');
+		if (score.length == 0) {
+			result.errors.push(new Error(`No results found my score`));
+			return result;
+		}
+		result.rank = parseInt(order[0].innerHTML);
+		result.score = parseInt(score[0].innerHTML.replace(' XP', ''));
 		return result;
 	}, res);
 };
@@ -107,9 +125,19 @@ const getLeaderboard = async (page: Page): Promise<Result> => {
 	});
 
 	const page = await login(browserPage, username, password);
+	page.setDefaultNavigationTimeout(120000); // 2m
 
-	const result = await getLeaderboard(page);
+	const result = await makeResult(page);
 
-	logger.info(`current order: ${result.order}, boader: ${result.map.get(25)}`);
+	if (result.errors.length > 0) {
+		for (let error of result.errors) {
+			logger.error(error.message);
+		}
+		await browser.close();
+		return;
+	}
+	logger.info(
+		`current rank: ${result.rank}, current score: ${result.score}, passing score: ${result.passing}`,
+	);
 	await browser.close();
 })();
