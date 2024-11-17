@@ -6,9 +6,9 @@ import log4js from 'log4js';
 const TOP_URL = 'https://www.duolingo.com';
 
 type Result = {
-	rank: Number;
-	score: Number;
-	passing: Number;
+	rank: number;
+	score: number;
+	passing: number;
 	errors: Error[];
 };
 
@@ -135,6 +135,9 @@ const makeResult = async (page: Page): Promise<Result> => {
 		}
 		await browser.close();
 		return;
+	}
+	if (result.rank <= 25) {
+		logger.info('in danger zone')
 	}
 	logger.info(
 		`current rank: ${result.rank}, current score: ${result.score}, passing score: ${result.passing}`,
