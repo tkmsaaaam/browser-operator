@@ -6,6 +6,7 @@ import log4js from 'log4js';
 const TOP_URL = 'https://www.duolingo.com';
 
 type Result = {
+	streak: undefined | boolean;
 	rank: number;
 	score: number;
 	passing: number;
@@ -43,7 +44,9 @@ const makeResult = async (page: Page): Promise<Result> => {
 	await page.waitForSelector('._3kvGS._5W_8K._7trGg');
 	await page.waitForSelector('._1kz8P');
 	await page.waitForSelector('._1OKd4');
+	await page.waitForSelector('[data-test="imageStreak"]');
 	const res: Result = {
+		streak: undefined,
 		rank: 0,
 		score: 0,
 		passing: 0,
@@ -78,6 +81,10 @@ const makeResult = async (page: Page): Promise<Result> => {
 		}
 		result.rank = parseInt(order[0].innerHTML);
 		result.score = parseInt(score[0].innerHTML.replace(' XP', ''));
+		result.streak =
+			document.querySelector(
+				'img[src="https://d35aaqx5ub95lt.cloudfront.net/images/icons/398e4298a3b39ce566050e5c041949ef.svg"]',
+			) != null;
 		return result;
 	}, res);
 };
@@ -137,10 +144,10 @@ const makeResult = async (page: Page): Promise<Result> => {
 		return;
 	}
 	if (result.rank <= 25) {
-		logger.info('in danger zone')
+		logger.info('in danger zone');
 	}
 	logger.info(
-		`current rank: ${result.rank}, current score: ${result.score}, passing score: ${result.passing}`,
+		`streak: ${result.streak}, current rank: ${result.rank}, current score: ${result.score}, passing score: ${result.passing}`,
 	);
 	await browser.close();
 })();
