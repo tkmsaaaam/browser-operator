@@ -143,7 +143,7 @@ const makeResult = async (page: Page): Promise<Result> => {
 		await browser.close();
 		return;
 	}
-	if (result.rank <= 25) {
+	if (result.rank > 25) {
 		logger.info('in danger zone');
 	}
 	logger.info(
