@@ -44,7 +44,7 @@ const makeResult = async (page: Page): Promise<Result> => {
 	await page.waitForSelector('._3kvGS._5W_8K._7trGg');
 	await page.waitForSelector('._1kz8P');
 	await page.waitForSelector('._1OKd4');
-	await page.waitForSelector('[data-test="imageStreak"]');
+	await page.waitForSelector('[data-test="streak-menu"]');
 	const res: Result = {
 		streak: undefined,
 		rank: 0,
