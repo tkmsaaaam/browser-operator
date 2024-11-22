@@ -38,7 +38,7 @@ const login = async (
 };
 
 const makeResult = async (page: Page): Promise<Result> => {
-	await page.goto('https://www.duolingo.com/leaderboard');
+	await page.goto(TOP_URL + '/leaderboard');
 	await sleep(1);
 	await page.waitForSelector('.MytTp');
 	await page.waitForSelector('._3kvGS._5W_8K._7trGg');
