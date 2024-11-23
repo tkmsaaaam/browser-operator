@@ -89,7 +89,7 @@ const makeResult = async (page: Page): Promise<Result> => {
 	}, res);
 };
 
-(async (): Promise<void> => {
+const main = async (): Promise<void> => {
 	const username = process.env.EMAIL;
 	if (!username) {
 		logger.error(
@@ -149,5 +149,30 @@ const makeResult = async (page: Page): Promise<Result> => {
 	logger.info(
 		`streak: ${result.streak}, current rank: ${result.rank}, current score: ${result.score}, passing score: ${result.passing}`,
 	);
+	if (process.env.FILE_OUTPUT == 'true') {
+		log4js.configure({
+			appenders: {
+				out: { type: 'stdout' },
+				file: {
+					type: 'dateFile',
+					filename: 'output.txt',
+					numBackups: 0,
+					layout: { type: 'pattern', pattern: '%m' },
+				},
+			},
+			categories: {
+				default: { appenders: ['out'], level: 'all' },
+				file: { appenders: ['file'], level: 'all' },
+			},
+		});
+		logger.info('exporting...');
+		const fileLogger = log4js.getLogger('file');
+		fileLogger.info(JSON.stringify(result, null, 2));
+	}
+	logger.info(JSON.stringify(result, null, 2));
 	await browser.close();
-})();
+};
+
+if (process.env.NODE_ENV != 'test') {
+	main().then();
+}
