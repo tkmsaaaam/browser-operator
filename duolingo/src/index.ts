@@ -137,7 +137,7 @@ const main = async (): Promise<void> => {
 	const result = await makeResult(page);
 
 	if (result.errors.length > 0) {
-		for (let error of result.errors) {
+		for (const error of result.errors) {
 			logger.error(error.message);
 		}
 		await browser.close();

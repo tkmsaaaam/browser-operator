@@ -7,7 +7,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "npm run lint && tsc && node lib/index.js",
 		"job": "tsc && node lib/index.js",
-		"lint": "prettier --write 'src/**/*.ts' && prettier --write '**/*.json'"
+		"lint": "eslint src/**/*.ts && prettier --write 'src/**/*.ts' && prettier --write '**/*.json'"
 	},
 	"repository": {
 		"type": "git",
@@ -20,13 +20,17 @@
 	},
 	"homepage": "https://github.com/tkmsaaaam/browser-operator/tree/main/duolingo#readme",
 	"devDependencies": {
-		"@types/node": "^22.9.0",
+		"@types/node": "^22.9.3",
+		"@typescript-eslint/eslint-plugin": "^8.13.0",
+		"@typescript-eslint/parser": "^8.13.0",
 		"dotenv": "^16.3.1",
+		"eslint": "^9.14.0",
+		"eslint-config-prettier": "^9.1.0",
 		"log4js": "^6.9.1",
 		"prettier": "^3.3.3",
-		"puppeteer": "^23.7.1",
-		"puppeteer-core": "^23.7.1",
+		"puppeteer": "^23.9.0",
+		"puppeteer-core": "^23.9.0",
 		"ts-node": "^10.9.1",
-		"typescript": "^5.6.3"
+		"typescript": "^5.7.2"
 	}
 }
