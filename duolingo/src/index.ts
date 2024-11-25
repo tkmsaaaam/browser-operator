@@ -147,7 +147,7 @@ const main = async (): Promise<void> => {
 		logger.info('in danger zone');
 	}
 	logger.info(
-		`streak: ${result.streak}, current rank: ${result.rank}, current score: ${result.score}, passing score: ${result.passing}`,
+		`streak: ${result.streak}, current rank: ${result.rank}, current score: ${result.score}, passing score: ${result.passing}, diff: ${result.score - result.passing}`,
 	);
 	if (process.env.FILE_OUTPUT == 'true') {
 		log4js.configure({
