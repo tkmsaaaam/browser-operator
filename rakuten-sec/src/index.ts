@@ -113,7 +113,8 @@ const main = async () => {
 				.startsWith('https://www.rakuten-sec.co.jp/web/shared/img') ||
 			request.url().startsWith('https://www.trkd-asia.com/') ||
 			request.url().startsWith('https://s.yjtag.jp/tag.js') ||
-			request.url().includes('akamaihd.net/')
+			request.url().includes('akamaihd.net/') ||
+			request.url().startsWith('https://member.rakuten-sec.co.jp/favicon.ico')
 		) {
 			request.abort().catch(err => console.error(err));
 		} else {
