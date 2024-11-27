@@ -27,11 +27,12 @@ const login = async (
 	await page.goto(TOP_URL);
 	await page.waitForSelector('[data-test="have-account"]');
 	await page.click('[data-test="have-account"]');
+	await page.waitForSelector('input[id="web-ui1"]');
+	await page.waitForSelector('input[id="web-ui2"]');
+	await page.waitForSelector('button[type="submit"]');
 	await page.type('input[id="web-ui1"]', username);
 	await page.type('input[id="web-ui2"]', password);
-	await sleep(1);
-	await page.waitForSelector('[type="submit"]');
-	await page.click('[type="submit"]');
+	await page.click('button[type="submit"]');
 	await page.waitForSelector('._27IMa');
 	logger.info(`login is succeeded. username: ${username}`);
 	return page;
@@ -109,6 +110,7 @@ const main = async (): Promise<void> => {
 		headless: false,
 	});
 	const browserPage = await browser.newPage();
+	// await browserPage.setRequestInterception(true);
 
 	browserPage.on('request', request => {
 		if (
