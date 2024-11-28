@@ -8,8 +8,9 @@ const TOP_URL = 'https://www.duolingo.com';
 type Result = {
 	streak: undefined | boolean;
 	rank: number;
-	score: number;
+	myScore: number;
 	passing: number;
+	scores: number[];
 	errors: Error[];
 };
 
@@ -49,8 +50,9 @@ const makeResult = async (page: Page): Promise<Result> => {
 	const res: Result = {
 		streak: undefined,
 		rank: 0,
-		score: 0,
+		myScore: 0,
 		passing: 0,
+		scores: [],
 		errors: [],
 	};
 	return await page.evaluate((result: Result) => {
@@ -81,11 +83,16 @@ const makeResult = async (page: Page): Promise<Result> => {
 			return result;
 		}
 		result.rank = parseInt(order[0].innerHTML);
-		result.score = parseInt(score[0].innerHTML.replace(' XP', ''));
+		result.myScore = parseInt(score[0].innerHTML.replace(' XP', ''));
 		result.streak =
 			document.querySelector(
 				'img[src="https://d35aaqx5ub95lt.cloudfront.net/images/icons/398e4298a3b39ce566050e5c041949ef.svg"]',
 			) != null;
+		const elements = document.getElementsByClassName('_1OKd4');
+		for (const e in elements) {
+			const num = parseInt(e.replace(' XP', ''));
+			result.scores.push(num);
+		}
 		return result;
 	}, res);
 };
@@ -110,32 +117,9 @@ const main = async (): Promise<void> => {
 		headless: false,
 	});
 	const browserPage = await browser.newPage();
-	// await browserPage.setRequestInterception(true);
-
-	browserPage.on('request', request => {
-		if (
-			request.url().startsWith('https://accounts.google.com') ||
-			request.url().startsWith('https://analytics.google.com') ||
-			request.url().startsWith('https://cdn.cookielaw.org') ||
-			request.url().startsWith('https://d35aaqx5ub95lt.cloudfront.net/css') ||
-			request
-				.url()
-				.startsWith('https://d35aaqx5ub95lt.cloudfront.net/images') ||
-			request.url().startsWith('https://fonts.gstatic.com') ||
-			request.url().startsWith('https://googleads.g.doubleclick.net') ||
-			request.url().startsWith('https://www.google.co.jp') ||
-			request.url().startsWith('https://www.google.com') ||
-			request.url().startsWith('https://www.facebook.com')
-		) {
-			request.abort().catch(err => console.error(err));
-		} else {
-			request.continue().catch(err => console.error(err));
-		}
-	});
 
 	const page = await login(browserPage, username, password);
 	page.setDefaultNavigationTimeout(120000); // 2m
-
 	const result = await makeResult(page);
 
 	if (result.errors.length > 0) {
@@ -145,11 +129,16 @@ const main = async (): Promise<void> => {
 		await browser.close();
 		return;
 	}
+	result.scores = result.scores.sort((a, b) => {
+		if (a < b) return -1;
+		if (a > b) return 1;
+		return 0;
+	});
 	if (result.rank > 25) {
 		logger.info('in danger zone');
 	}
 	logger.info(
-		`streak: ${result.streak}, current rank: ${result.rank}, current score: ${result.score}, passing score: ${result.passing}, diff: ${result.score - result.passing}`,
+		`streak: ${result.streak}, current rank: ${result.rank}, current score: ${result.myScore}, passing score: ${result.passing}, diff: ${result.myScore - result.passing}`,
 	);
 	if (process.env.FILE_OUTPUT == 'true') {
 		log4js.configure({
