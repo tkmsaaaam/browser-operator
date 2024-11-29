@@ -120,6 +120,7 @@ const main = async (): Promise<void> => {
 
 	const page = await login(browserPage, username, password);
 	page.setDefaultNavigationTimeout(120000); // 2m
+	page.setDefaultTimeout(120000); // 2m
 	const result = await makeResult(page);
 
 	if (result.errors.length > 0) {
