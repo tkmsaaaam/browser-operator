@@ -23,7 +23,7 @@ const login = async (
 	page: Page,
 	username: string,
 	password: string,
-): Promise<Page> => {
+): Promise<Page | Error> => {
 	logger.info(`login is started. username: ${username}`);
 	await page.goto(TOP_URL);
 	await page.waitForSelector('[data-test="have-account"]');
@@ -34,7 +34,12 @@ const login = async (
 	await page.type('input[id="web-ui1"]', username);
 	await page.type('input[id="web-ui2"]', password);
 	await page.click('button[type="submit"]');
-	await page.waitForSelector('._27IMa');
+	try {
+		await page.waitForSelector('._27IMa');
+	} catch (e) {
+		logger.info(`login failure: ${e}`);
+		return new Error('Login failed.');
+	}
 	logger.info(`login is succeeded. username: ${username}`);
 	return page;
 };
@@ -119,6 +124,9 @@ const main = async (): Promise<void> => {
 	const browserPage = await browser.newPage();
 
 	const page = await login(browserPage, username, password);
+	if (page instanceof Error) {
+		return;
+	}
 	page.setDefaultNavigationTimeout(120000); // 2m
 	page.setDefaultTimeout(120000); // 2m
 	const result = await makeResult(page);
